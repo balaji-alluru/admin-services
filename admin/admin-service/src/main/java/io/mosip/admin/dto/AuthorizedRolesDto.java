@@ -27,5 +27,24 @@ public class AuthorizedRolesDto {
 	//packet status update controller
 	private List<String> getpacketstatusupdate;
 
+
+	//admin lostRid controller
+
+	private List<String> getlostRiddetailsrid;
+	private List<String> postlostRid;
+
+	//applicant Details controller
+
+	private List<String> getapplicantDetailsrid;
+	private List<String> getapplicantDetailsgetLoginDetails;
+	private List<String> getriddigitalcardrid;
+
+
+	// keymanager controller
+	private List<String> getgeneratecsrcertificateapplicationidreferenceid;
+	private List<String> postuploadcertificate;
+	private List<String> postgeneratecsr;
+	private List<String> postuploadotherdomaincertificate;
+
 	
 }

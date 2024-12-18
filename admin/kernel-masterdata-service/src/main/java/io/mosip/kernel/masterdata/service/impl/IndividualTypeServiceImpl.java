@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.mosip.kernel.masterdata.dto.response.FilterResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -182,14 +183,15 @@ public class IndividualTypeServiceImpl implements IndividualTypeService {
 		List<ColumnValue> columnValueList = new ArrayList<>();
 		if (filterColumnValidator.validate(FilterDto.class, filterValueDto.getFilters(), IndividualType.class)) {
 			for (FilterDto filterDto : filterValueDto.getFilters()) {
-				List<?> filterValues = masterDataFilterHelper.filterValues(IndividualType.class, filterDto,
+				FilterResult<String> filterResult = masterDataFilterHelper.filterValues(IndividualType.class, filterDto,
 						filterValueDto);
-				filterValues.forEach(filterValue -> {
+				filterResult.getFilterData().forEach(filterValue -> {
 					ColumnValue columnValue = new ColumnValue();
 					columnValue.setFieldID(filterDto.getColumnName());
-					columnValue.setFieldValue(filterValue.toString());
+					columnValue.setFieldValue(filterValue);
 					columnValueList.add(columnValue);
 				});
+				filterResponseDto.setTotalCount(filterResult.getTotalCount());
 			}
 			filterResponseDto.setFilters(columnValueList);
 		}
@@ -212,7 +214,7 @@ public class IndividualTypeServiceImpl implements IndividualTypeService {
 					String.format(MasterDataConstant.FAILURE_DESC,
 							IndividualTypeErrorCode.INDIVIDUAL_TYPE_INSERT_EXCEPTION.getErrorCode(),
 							IndividualTypeErrorCode.INDIVIDUAL_TYPE_INSERT_EXCEPTION.getErrorMessage()
-									+ ExceptionUtils.parseException(e)));
+									+ ExceptionUtils.parseException(e)),"ADM-941");
 			throw new MasterDataServiceException(
 					IndividualTypeErrorCode.INDIVIDUAL_TYPE_INSERT_EXCEPTION.getErrorCode(),
 					IndividualTypeErrorCode.INDIVIDUAL_TYPE_INSERT_EXCEPTION.getErrorMessage() + " "
@@ -225,7 +227,7 @@ public class IndividualTypeServiceImpl implements IndividualTypeService {
 		auditUtil.auditRequest(
 				String.format(MasterDataConstant.SUCCESSFUL_CREATE, IndividualType.class.getSimpleName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_CREATE_DESC,
-						IndividualType.class.getSimpleName(), individualTypeExtnDto.getCode()));
+						IndividualType.class.getSimpleName(), individualTypeExtnDto.getCode()),"ADM-942");
 		return individualTypeExtnDto;
 	}
 
@@ -256,7 +258,7 @@ public class IndividualTypeServiceImpl implements IndividualTypeService {
 					String.format(MasterDataConstant.FAILURE_DESC,
 							IndividualTypeErrorCode.INDIVIDUAL_TYPE_UPDATE_EXCEPTION.getErrorCode(),
 							IndividualTypeErrorCode.INDIVIDUAL_TYPE_UPDATE_EXCEPTION.getErrorMessage()
-									+ ExceptionUtils.parseException(e)));
+									+ ExceptionUtils.parseException(e)),"ADM-943");
 			throw new MasterDataServiceException(IndividualTypeErrorCode.INDIVIDUAL_TYPE_UPDATE_EXCEPTION.getErrorCode(),
 					IndividualTypeErrorCode.INDIVIDUAL_TYPE_UPDATE_EXCEPTION.getErrorMessage() + ExceptionUtils.parseException(e));
 		}
@@ -264,7 +266,7 @@ public class IndividualTypeServiceImpl implements IndividualTypeService {
 		auditUtil.auditRequest(
 				String.format(MasterDataConstant.SUCCESSFUL_UPDATE, IndividualType.class.getSimpleName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_UPDATE_DESC,
-						IndividualType.class.getSimpleName(), individualTypeExtnDto.getCode()));
+						IndividualType.class.getSimpleName(), individualTypeExtnDto.getCode()),"ADM-944");
 		return individualTypeExtnDto;
 	}
 	

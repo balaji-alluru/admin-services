@@ -381,11 +381,10 @@ public class HolidayServiceImpl implements HolidayService {
 	 * kernel.masterdata.entity.id.HolidayID)
 	 */
 	@Override
-	public HolidayIdDeleteDto deleteHoliday(RequestWrapper<HolidayIdDeleteDto> request) {
-		HolidayIdDeleteDto idDto = request.getRequest();
+	public HolidayIdDeleteDto deleteHoliday(HolidayIdDeleteDto request) {
 		try {
 			int affectedRows = holidayRepository.deleteHolidays(LocalDateTime.now(ZoneId.of("UTC")),
-					idDto.getHolidayDate(), idDto.getLocationCode());
+					request.getHolidayDate(), request.getLocationCode());
 			if (affectedRows == 0)
 				throw new RequestException(HolidayErrorCode.HOLIDAY_NOTFOUND.getErrorCode(),
 						HolidayErrorCode.HOLIDAY_NOTFOUND.getErrorMessage());
@@ -394,7 +393,7 @@ public class HolidayServiceImpl implements HolidayService {
 			throw new MasterDataServiceException(HolidayErrorCode.HOLIDAY_DELETE_EXCEPTION.getErrorCode(),
 					HolidayErrorCode.HOLIDAY_DELETE_EXCEPTION.getErrorMessage() + ExceptionUtils.parseException(e));
 		}
-		return idDto;
+		return request;
 	}
 
 	/**
@@ -546,18 +545,20 @@ public class HolidayServiceImpl implements HolidayService {
 		List<ColumnCodeValue> columnValueList = new ArrayList<>();
 		if (filterColumnValidator.validate(FilterDto.class, filterValueDto.getFilters(), Holiday.class)) {
 			for (FilterDto filterDto : filterValueDto.getFilters()) {
-				List<?> filterValues = masterDataFilterHelper.filterValues(Holiday.class, filterDto, filterValueDto);
-				filterValues.forEach(filterValue -> {
+				FilterResult<String> filterResult = masterDataFilterHelper.filterValues(Holiday.class, filterDto, filterValueDto);
+				filterResult.getFilterData().forEach(filterValue -> {
 					ColumnCodeValue columnValue = new ColumnCodeValue();
 					columnValue.setFieldID(filterDto.getColumnName());
+					//TODO incorrect implementation, need to store locationName in the holiday table
 					if(filterDto.getColumnName().equalsIgnoreCase("locationCode")){
-						columnValue.setFieldValue(locationService.getLocationDetailsByLangCode(filterValue.toString(),filterValueDto.getLanguageCode()).getName());
-						columnValue.setFieldCode(filterValue.toString());
+						columnValue.setFieldValue(locationService.getLocationDetailsByLangCode(filterValue, filterValueDto.getLanguageCode()).getName());
+						columnValue.setFieldCode(filterValue);
 					}else{
-						columnValue.setFieldValue(filterValue.toString());
+						columnValue.setFieldValue(filterValue);
 					}
 					columnValueList.add(columnValue);
 				});
+				filterResponseDto.setTotalCount(filterResult.getTotalCount());
 			}
 			filterResponseDto.setFilters(columnValueList);
 		}

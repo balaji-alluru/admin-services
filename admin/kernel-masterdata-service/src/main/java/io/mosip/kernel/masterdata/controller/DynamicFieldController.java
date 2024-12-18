@@ -4,15 +4,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
-import io.mosip.kernel.masterdata.dto.*;
-import io.mosip.kernel.masterdata.dto.request.FilterValueDto;
-import io.mosip.kernel.masterdata.dto.response.FilterResponseCodeDto;
-import io.mosip.kernel.masterdata.dto.response.FilterResponseDto;
-import io.mosip.kernel.masterdata.entity.DocumentCategory;
-import io.mosip.kernel.masterdata.entity.DynamicField;
-import io.mosip.kernel.masterdata.service.GenericService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,15 +23,23 @@ import io.mosip.kernel.core.http.RequestWrapper;
 import io.mosip.kernel.core.http.ResponseFilter;
 import io.mosip.kernel.core.http.ResponseWrapper;
 import io.mosip.kernel.masterdata.constant.MasterDataConstant;
-import io.mosip.kernel.masterdata.constant.OrderEnum;
+import io.mosip.kernel.masterdata.dto.DynamicFieldConsolidateResponseDto;
+import io.mosip.kernel.masterdata.dto.DynamicFieldDefDto;
+import io.mosip.kernel.masterdata.dto.DynamicFieldDto;
+import io.mosip.kernel.masterdata.dto.DynamicFieldPutDto;
+import io.mosip.kernel.masterdata.dto.MissingDataDto;
 import io.mosip.kernel.masterdata.dto.getresponse.DynamicFieldResponseDto;
 import io.mosip.kernel.masterdata.dto.getresponse.DynamicFieldSearchResponseDto;
 import io.mosip.kernel.masterdata.dto.getresponse.PageDto;
 import io.mosip.kernel.masterdata.dto.getresponse.StatusResponseDto;
 import io.mosip.kernel.masterdata.dto.getresponse.extn.DynamicFieldExtnDto;
+import io.mosip.kernel.masterdata.dto.request.FilterValueDto;
 import io.mosip.kernel.masterdata.dto.request.SearchDto;
+import io.mosip.kernel.masterdata.dto.response.FilterResponseCodeDto;
+import io.mosip.kernel.masterdata.dto.response.FilterResponseDto;
 import io.mosip.kernel.masterdata.dto.response.PageResponseDto;
 import io.mosip.kernel.masterdata.service.DynamicFieldService;
+import io.mosip.kernel.masterdata.service.GenericService;
 import io.mosip.kernel.masterdata.utils.AuditUtil;
 import io.mosip.kernel.masterdata.utils.LocalDateTimeUtil;
 import io.swagger.annotations.Api;
@@ -81,6 +82,27 @@ public class DynamicFieldController {
 		return responseWrapper;
 	}
 
+
+	@ResponseFilter
+	@GetMapping("/{fieldName}/{langCode}")
+	@ApiOperation(value = "Service to fetch  dynamic field based on langcode and field name")
+	public ResponseWrapper<DynamicFieldConsolidateResponseDto> getDynamicFieldByName(@PathVariable("fieldName") String fieldName,@PathVariable("langCode") String langCode,@RequestParam(name = "withValue",defaultValue = "false",required = false) boolean withValue){
+		ResponseWrapper<DynamicFieldConsolidateResponseDto> responseWrapper = new ResponseWrapper<>();
+		responseWrapper.setResponse(dynamicFieldService.getDynamicFieldByNameAndLangcode(fieldName,langCode,withValue));
+		return responseWrapper;
+	}
+
+	@ResponseFilter
+	@GetMapping("/{fieldName}")
+	@ApiOperation(value = " Service to fetch one dynamic field in all the languages")
+	public ResponseWrapper<List<DynamicFieldExtnDto>> getAllDynamicFieldByName(
+			@PathVariable("fieldName") String fieldName){
+		ResponseWrapper<List<DynamicFieldExtnDto>> responseWrapper = new ResponseWrapper<>();
+		responseWrapper.setResponse(dynamicFieldService.getAllDynamicFieldByName(fieldName));
+		return responseWrapper;
+	}
+	
+	
 	@ResponseFilter
 	//@PreAuthorize("hasAnyRole(@authorizedRoles.getGetdistinct())")
 	@GetMapping("/distinct")
@@ -216,11 +238,11 @@ public class DynamicFieldController {
 		auditUtil.auditRequest(
 				MasterDataConstant.SEARCH_API_IS_CALLED + SearchDto.class.getCanonicalName(),
 				MasterDataConstant.AUDIT_SYSTEM,
-				MasterDataConstant.SEARCH_API_IS_CALLED + SearchDto.class.getCanonicalName());
+				MasterDataConstant.SEARCH_API_IS_CALLED + SearchDto.class.getCanonicalName(),"ADM-904");
 		responseWrapper.setResponse(dynamicFieldService.searchDynamicFields(dto.getRequest()));
 		auditUtil.auditRequest(MasterDataConstant.SUCCESSFUL_SEARCH + SearchDto.class.getCanonicalName(),
 				MasterDataConstant.AUDIT_SYSTEM,
-				MasterDataConstant.SUCCESSFUL_SEARCH + SearchDto.class.getCanonicalName());
+				MasterDataConstant.SUCCESSFUL_SEARCH + SearchDto.class.getCanonicalName(),"ADM-905");
 		return responseWrapper;
 	}
 
@@ -264,5 +286,7 @@ public class DynamicFieldController {
 		return responseWrapper;
 	}
 
+	
+	
 
 }

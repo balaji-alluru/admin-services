@@ -9,22 +9,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Id;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.CriteriaUpdate;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Id;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaUpdate;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 import org.hibernate.HibernateException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
@@ -133,22 +132,7 @@ public class MasterdataCreationUtil {
 		return primaryKeyCol;
 	}
 
-	private <T> void setIsActive(Class<?> dtoClass, boolean activeDto, T t, boolean priSecIdentical,Field isActive)
-			throws NoSuchFieldException, IllegalAccessException {
-		
-		if (activeDto && priSecIdentical) {
-			isActive = dtoClass.getDeclaredField(ISACTIVE_COLUMN_NAME);
-			isActive.setAccessible(true);
-			isActive.set(t, Boolean.TRUE);
-		} else {
-			isActive = dtoClass.getDeclaredField(ISACTIVE_COLUMN_NAME);
-			isActive.setAccessible(true);
-			isActive.set(t, Boolean.FALSE);
-		}
-	}
-
-
-
+	
 	private <E> int updatePrimaryToTrue(Class<E> entityClass, String id, String primaryKeyCol, boolean active) {
 		List<Predicate> predicates = new ArrayList<Predicate>();
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();

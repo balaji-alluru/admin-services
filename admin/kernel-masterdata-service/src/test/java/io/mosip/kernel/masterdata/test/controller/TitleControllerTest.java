@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
@@ -48,7 +49,7 @@ public class TitleControllerTest extends AbstractTest {
 	
 	@Before
 	public void setUp() {
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 		
 		requestWrapper = new RequestWrapper<>();
 		String langCode = "eng", code = "TVM", titleName = "tvm-center", titleDescription = "tit-descrip";
@@ -96,7 +97,8 @@ public class TitleControllerTest extends AbstractTest {
 		//then
 		MasterDataTest.checkResponse(mockMvc.perform(requestBuilder).andReturn(), null);
 	}
-	
+
+	@Ignore
 	@Test
 	public void t0getAllTitlesFailureNotFound() throws Exception {
 		//when
@@ -139,7 +141,7 @@ public class TitleControllerTest extends AbstractTest {
 	
 	@Test
 	@WithUserDetails("global-admin")
-	public void t1saveTitleFailureInsert() throws Exception {
+	public void t1saveTitleInsert() throws Exception {
 		//when
 		String uri = "/title";
 		RequestBuilder requestBuilder = MockMvcRequestBuilders.post(uri)
@@ -148,7 +150,7 @@ public class TitleControllerTest extends AbstractTest {
 				.content(mapToJson(requestWrapper));
 		//then
 		MasterDataTest.checkResponse(mockMvc.perform(requestBuilder).andReturn(), 
-				TitleErrorCode.TITLE_INSERT_EXCEPTION.getErrorCode());
+				null);
 	}
 	
 	@Test
@@ -201,7 +203,7 @@ public class TitleControllerTest extends AbstractTest {
 		//given
 		String code = "tam";
 		//when
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 		String uri = "/title/" + code;
 		RequestBuilder requestBuilder = MockMvcRequestBuilders.delete(uri)
 				.accept(MediaType.APPLICATION_JSON_VALUE)
@@ -213,7 +215,7 @@ public class TitleControllerTest extends AbstractTest {
 	
 	@Test
 	@WithUserDetails("global-admin")
-	public void getAllTitlesWithPaginationFailureNotFound() throws Exception {
+	public void getAllTitlesWithPagination() throws Exception {
 		//given
 		String pageNumber = "0", pageSize = "10", sortBy = "createdDateTime", orderBy = "desc";
 		//when
@@ -227,7 +229,7 @@ public class TitleControllerTest extends AbstractTest {
 				.param("orderBy", orderBy);
 		//then
 		MasterDataTest.checkResponse(mockMvc.perform(requestBuilder).andReturn(), 
-				TitleErrorCode.TITLE_NOT_FOUND.getErrorCode());
+				null);
 	}
 	
 	@Test

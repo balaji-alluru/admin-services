@@ -4,8 +4,12 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
+import io.mosip.admin.bulkdataupload.service.impl.BulkDataUploadServiceImpl;
+import io.mosip.kernel.authcodeflowproxy.api.exception.AuthCodeProxyExceptionHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -14,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,7 +37,7 @@ import io.mosip.kernel.core.util.EmptyCheckUtils;
 
 
 /**
- * Rest Controller Advice for Master Data
+ * Rest Controller Advice for Admin
  * 
  * @author Srinivasan
  *
@@ -45,9 +50,27 @@ public class ApiExceptionHandler {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	private static final Logger logger = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
+
+	/*@ExceptionHandler(value = {AuthCodeProxyExceptionHandler.class})
+	public ResponseEntity<ResponseWrapper<ServiceError>> defaultErrorHandler(
+			final HttpServletRequest httpServletRequest, AuthCodeProxyExceptionHandler e) throws IOException {
+		ResponseWrapper<ServiceError> errorResponse = setErrors(httpServletRequest);
+		errorResponse.getErrors().addAll(e.getList());
+		return new ResponseEntity<>(errorResponse, e.getHttpStatus());
+	}*/
+	@ExceptionHandler(RequestException.class)
+	public ResponseEntity<ResponseWrapper<ServiceError>> controlRequestException(
+			final HttpServletRequest httpServletRequest, final RequestException e) throws IOException {
+		logger.info("exception : {} ",e);
+		return getErrorResponseEntity(e, HttpStatus.OK, httpServletRequest);
+	}
+
 	@ExceptionHandler(MasterDataServiceException.class)
 	public ResponseEntity<ResponseWrapper<ServiceError>> controlDataServiceException(
 			final HttpServletRequest httpServletRequest, final MasterDataServiceException e) throws IOException {
+		logger.info("exception : {} ",e);
 		return getErrorResponseEntity(e, HttpStatus.INTERNAL_SERVER_ERROR, httpServletRequest);
 	}
 
@@ -57,11 +80,7 @@ public class ApiExceptionHandler {
 		return getErrorResponseEntity(e, HttpStatus.OK, httpServletRequest);
 	}
 
-	@ExceptionHandler(RequestException.class)
-	public ResponseEntity<ResponseWrapper<ServiceError>> controlRequestException(
-			final HttpServletRequest httpServletRequest, final RequestException e) throws IOException {
-		return getErrorResponseEntity(e, HttpStatus.OK, httpServletRequest);
-	}
+
 
 	@ExceptionHandler(AccessDeniedException.class)
 	public ResponseEntity<ResponseWrapper<ServiceError>> onAccessDeniedException(
@@ -97,10 +116,10 @@ public class ApiExceptionHandler {
 	}
 
 
-
 	@ExceptionHandler(value = { Exception.class, RuntimeException.class })
 	public ResponseEntity<ResponseWrapper<ServiceError>> defaultErrorHandler(
 			final HttpServletRequest httpServletRequest, Exception e) throws IOException {
+		logger.info("exception : {} ",e);
 		ResponseWrapper<ServiceError> errorResponse = setErrors(httpServletRequest);
 		ServiceError error = new ServiceError(RequestErrorCode.INTERNAL_SERVER_ERROR.getErrorCode(), e.getMessage());
 		errorResponse.getErrors().add(error);

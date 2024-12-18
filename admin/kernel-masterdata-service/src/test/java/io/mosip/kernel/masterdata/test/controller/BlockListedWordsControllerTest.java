@@ -59,7 +59,7 @@ public class BlockListedWordsControllerTest {
 	public void setUp() {
 		mapper = new ObjectMapper();
 		mapper.registerModule(new JavaTimeModule());
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 		blocklistedwordsReq = new RequestWrapper<BlocklistedWordListRequestDto>();
 		BlocklistedWordListRequestDto blocklistedWordListRequestDto = new BlocklistedWordListRequestDto();
 		List<String> blockListed = new ArrayList<String>();
@@ -322,14 +322,14 @@ public class BlockListedWordsControllerTest {
 
 	@Test
 	@WithUserDetails("global-admin")
-	public void t015searchBlockListedWordsFailTest() throws Exception {
+	public void t015searchBlockListedWordsTest() throws Exception {
 
 		MasterDataTest.checkResponse(mockMvc
 				.perform(MockMvcRequestBuilders.post("/blocklistedwords/words").contentType(MediaType.APPLICATION_JSON)
 						.content("{\n" + "  \"id\": \"string\",\n" + "  \"version\": \"string\",\n"
 								+ "  \"requesttime\": \"2018-12-17T07:22:22.233Z\",\n" + "  \"request\": {\n"
 								+ "   \"blocklistedwords\": [\"dammmmm\"]\n}}"))
-				.andReturn(), "KER-MSD-999");
+				.andReturn(), null);
 
 	}
 
@@ -362,6 +362,18 @@ public class BlockListedWordsControllerTest {
 		MasterDataTest.checkResponse(
 				mockMvc.perform(MockMvcRequestBuilders.delete("/blocklistedwords/damit1")).andReturn(), "KER-MSD-008");
 
+	}
+	@Test
+	@WithUserDetails("global-admin")
+	public void t001createBlockListedWordTest3() throws Exception {
+
+		MasterDataTest.checkResponse(mockMvc
+				.perform(MockMvcRequestBuilders.post("/blocklistedwords").contentType(MediaType.APPLICATION_JSON)
+						.content("{\n" + "  \"id\": \"string\",\n" + "  \"version\": \"string\",\n"
+								+ "  \"requesttime\": \"2018-12-17T07:22:22.233Z\",\n" + "  \"request\": {\n"
+								+ "   \"description\": \"Block listed word\",\n" + "    \"isActive\": true,\n"
+								+ "    \"langCode\": \"eng\",\n" + "    \"word\": \"damm%%\"\n" + "  }\n" + "}"))
+				.andReturn(), "KER-MSD-999");
 	}
 
 }

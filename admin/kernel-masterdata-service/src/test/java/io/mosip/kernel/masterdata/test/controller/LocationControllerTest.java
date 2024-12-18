@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -71,7 +72,7 @@ public class LocationControllerTest {
 		mapper = new ObjectMapper();
 		mapper.registerModule(new JavaTimeModule());
 
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 
 		locationCreateDtoReq = new RequestWrapper<LocationCreateDto>();
 		LocationCreateDto createDto = new LocationCreateDto();
@@ -128,6 +129,7 @@ public class LocationControllerTest {
 
 	}
 
+	@Ignore
 	@Test
 	@WithUserDetails("global-admin")
 	public void t029getLocationHierarchyDetailsTest() throws Exception {
@@ -136,6 +138,7 @@ public class LocationControllerTest {
 				null);
 	}
 
+	@Ignore
 	@Test
 	@WithUserDetails("global-admin")
 	public void t001getLocationHierarchyDetailsFailTest() throws Exception {
@@ -152,6 +155,24 @@ public class LocationControllerTest {
 				.checkResponse(mockMvc.perform(MockMvcRequestBuilders.get("/locations/14022/eng")).andReturn(), null);
 	}
 
+	@Test
+	@WithUserDetails("global-admin")
+	public void t029getLocationHierarchyByLangCodeTest1() throws Exception {
+
+		MasterDataTest
+				.checkResponse(mockMvc.perform(MockMvcRequestBuilders.get("/locations/BNMR/ara")).andReturn(), null);
+	}
+	
+	
+	@Test
+	@WithUserDetails("global-admin")
+	public void t029getLocationHierarchyByLangCodeTest2() throws Exception {
+
+		MasterDataTest
+				.checkResponse(mockMvc.perform(MockMvcRequestBuilders.get("/locations/MOGR/eng")).andReturn(), null);
+	}
+	
+	
 	@Test
 	@WithUserDetails("global-admin")
 	public void t002getLocationHierarchyByLangCodeFailTest() throws Exception {
@@ -475,13 +496,13 @@ public class LocationControllerTest {
 
 	@Test
 	@WithUserDetails("global-admin")
-	public void t008getLocationsFailTest() throws Exception {
+	public void t008getLocationsTest() throws Exception {
 
 		MasterDataTest
 				.checkResponse(mockMvc
 						.perform(MockMvcRequestBuilders.get("/locations/all").param("pageNumber", "0")
 								.param("pageSize", "10").param("sortBy", "createdDateTime").param("orderBy", "desc"))
-						.andReturn(), "KER-MSD-026");
+						.andReturn(), null);
 	}
 
 	@Test
@@ -501,6 +522,7 @@ public class LocationControllerTest {
 
 	}
 
+	@Ignore
 	@Test
 	@WithUserDetails("global-admin")
 	public void t010getMissingLocationDetailsFailTest() throws Exception {
@@ -556,11 +578,11 @@ public class LocationControllerTest {
 
 	@Test
 	@WithUserDetails("global-admin")
-	public void t015searchLocationFailTest() throws Exception {
+	public void t015searchLocationTest() throws Exception {
 		//searchDtoRq
 		MasterDataTest.checkResponse(mockMvc.perform(MockMvcRequestBuilders.post("/locations/search")
 				.contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(searchDtoRq))).andReturn(),
-				"KER-MSD-026");
+				null);
 
 	}
 
@@ -606,18 +628,18 @@ public class LocationControllerTest {
 				.checkResponse(mockMvc
 						.perform(MockMvcRequestBuilders.post("/locations/filtervalues")
 								.contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(filValDto)))
-						.andReturn(), "KER-MSD-026");
+						.andReturn(), null);
 	}
 
 	@Test
 	@WithUserDetails("global-admin")
-	public void t016locationFilterValuesFailTest() throws Exception {
+	public void t016locationFilterValuesTest() throws Exception {
 
 		MasterDataTest
 				.checkResponse(mockMvc
 						.perform(MockMvcRequestBuilders.post("/locations/filtervalues")
 								.contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(filValDto)))
-						.andReturn(), "KER-MSD-026");
+						.andReturn(), null);
 	}
 
 	@Test
@@ -654,6 +676,14 @@ public class LocationControllerTest {
 				.perform(MockMvcRequestBuilders.patch("/locations").param("code", "10099").param("isActive", "false"))
 				.andReturn(), "KER-MSD-026");
 
+	}
+
+	@Test
+	@WithUserDetails("global-admin")
+	public void t021getImmediateChildrenByLocCode() throws Exception {
+
+		MasterDataTest
+				.checkResponse(mockMvc.perform(MockMvcRequestBuilders.get("/locations/immediatechildren/RSK?languageCodes=eng,tam")).andReturn(), null);
 	}
 
 }

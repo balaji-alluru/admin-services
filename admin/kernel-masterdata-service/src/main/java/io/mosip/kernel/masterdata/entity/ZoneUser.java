@@ -2,13 +2,11 @@ package io.mosip.kernel.masterdata.entity;
 
 import java.io.Serializable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-import io.mosip.kernel.masterdata.entity.id.ZoneUserId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,5 +33,9 @@ public class ZoneUser extends BaseEntity implements Serializable {
 
 	@Column(name = "lang_code", nullable = true, length = 3)
 	private String langCode;
+	
+	public String getUserId() {
+		return this.userId.toLowerCase();
+	}
 
 }

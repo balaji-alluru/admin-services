@@ -4,9 +4,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
+import io.mosip.kernel.masterdata.dto.response.FilterResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
@@ -415,14 +416,15 @@ public class BlocklistedWordsServiceImpl implements BlocklistedWordsService {
 		List<ColumnValue> columnValueList = new ArrayList<>();
 		if (filterColumnValidator.validate(FilterDto.class, filterValueDto.getFilters(), BlocklistedWords.class)) {
 			for (FilterDto filterDto : filterValueDto.getFilters()) {
-				List<?> filterValues = masterDataFilterHelper.filterValues(BlocklistedWords.class, filterDto,
+				FilterResult<String> filterResult = masterDataFilterHelper.filterValues(BlocklistedWords.class, filterDto,
 						filterValueDto);
-				filterValues.forEach(filterValue -> {
+				filterResult.getFilterData().forEach(filterValue -> {
 					ColumnValue columnValue = new ColumnValue();
 					columnValue.setFieldID(filterDto.getColumnName());
-					columnValue.setFieldValue(filterValue.toString());
+					columnValue.setFieldValue(filterValue);
 					columnValueList.add(columnValue);
 				});
+				filterResponseDto.setTotalCount(filterResult.getTotalCount());
 			}
 			filterResponseDto.setFilters(columnValueList);
 		}

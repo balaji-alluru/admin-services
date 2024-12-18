@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import io.mosip.kernel.masterdata.utils.ExceptionUtils;
+import io.mosip.kernel.masterdata.utils.LanguageUtils;
+
 import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,9 +60,12 @@ public class IdentitySchemaServiceImpl implements IdentitySchemaService {
 
 	@Autowired
 	private UISpecService uiSpecService;
-
+	
 	@Value("${mosip.ui.spec.default.domain:registration-client}")
 	private String defaultDomain;
+	
+	@Autowired
+	private LanguageUtils languageUtil;
 
 	/*
 	 * (non-Javadoc)
@@ -159,7 +164,7 @@ public class IdentitySchemaServiceImpl implements IdentitySchemaService {
 		entity.setIdVersion(0);
 		entity.setSchemaJson(dto.getSchema());
 		entity.setId(UUID.randomUUID().toString());
-		entity.setLangCode("eng");
+		entity.setLangCode(languageUtil.getDefaultLanguage());
 		entity.setIsDeleted(false);
 		entity.setAdditionalProperties(false);
 		try {
@@ -271,14 +276,16 @@ public class IdentitySchemaServiceImpl implements IdentitySchemaService {
 	@Transactional
 	public String deleteSchema(String id) {
 		try {
-			int updatedRows = identitySchemaRepository.deleteIdentitySchema(id, MetaDataUtils.getCurrentDateTime(),
-					MetaDataUtils.getContextUser());
-
-			if (updatedRows < 1) {
+			IdentitySchema entity = identitySchemaRepository.findIdentitySchemaById(id);
+			if (entity == null) {
 				throw new RequestException(SchemaErrorCode.SCHEMA_NOT_FOUND_EXCEPTION.getErrorCode(),
 						SchemaErrorCode.SCHEMA_NOT_FOUND_EXCEPTION.getErrorMessage());
+			} else if (STATUS_PUBLISHED.equalsIgnoreCase(entity.getStatus())) {
+				throw new RequestException(SchemaErrorCode.PUBLISHED_SCHEMA_EXCEPTION.getErrorCode(),
+						SchemaErrorCode.PUBLISHED_SCHEMA_EXCEPTION.getErrorMessage());
 			}
-
+			identitySchemaRepository.deleteIdentitySchema(id, MetaDataUtils.getCurrentDateTime(),
+					MetaDataUtils.getContextUser());
 		} catch (DataAccessException | DataAccessLayerException e) {
 			LOGGER.error("Error while deleting identity schema : " , ExceptionUtils.neutralizeParam(id), e);
 			throw new MasterDataServiceException(SchemaErrorCode.SCHEMA_UPDATE_EXCEPTION.getErrorCode(),

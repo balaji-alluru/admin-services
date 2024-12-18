@@ -62,7 +62,7 @@ public class ApplicationControllerTest {
 	public void setUp() {
 		mapper = new ObjectMapper();
 		mapper.registerModule(new JavaTimeModule());
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 	
 	}
 
@@ -127,9 +127,9 @@ public class ApplicationControllerTest {
 
 	@Test
 	@WithUserDetails("global-admin")
-	public void t1getAllApplicationFailTest() throws Exception {
+	public void t1getAllApplicationTest() throws Exception {
 		MasterDataTest.checkResponse(mockMvc.perform(MockMvcRequestBuilders.get("/applicationtypes")).andReturn(),
-				"KER-MSD-002");
+				null);
 	}
 
 	@Test

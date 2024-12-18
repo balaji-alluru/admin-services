@@ -5,11 +5,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
+import io.mosip.kernel.masterdata.dto.response.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,7 +27,6 @@ import io.mosip.kernel.core.util.EmptyCheckUtils;
 import io.mosip.kernel.masterdata.constant.LocationErrorCode;
 import io.mosip.kernel.masterdata.constant.MasterDataConstant;
 import io.mosip.kernel.masterdata.constant.MasterdataSearchErrorCode;
-import io.mosip.kernel.masterdata.constant.ValidationErrorCode;
 import io.mosip.kernel.masterdata.dto.FilterData;
 import io.mosip.kernel.masterdata.dto.LocationCreateDto;
 import io.mosip.kernel.masterdata.dto.LocationDto;
@@ -47,12 +45,6 @@ import io.mosip.kernel.masterdata.dto.request.FilterValueDto;
 import io.mosip.kernel.masterdata.dto.request.Pagination;
 import io.mosip.kernel.masterdata.dto.request.SearchDto;
 import io.mosip.kernel.masterdata.dto.request.SearchSort;
-import io.mosip.kernel.masterdata.dto.response.ColumnCodeValue;
-import io.mosip.kernel.masterdata.dto.response.FilterResponseCodeDto;
-import io.mosip.kernel.masterdata.dto.response.LocationPostResponseDto;
-import io.mosip.kernel.masterdata.dto.response.LocationPutResponseDto;
-import io.mosip.kernel.masterdata.dto.response.LocationSearchDto;
-import io.mosip.kernel.masterdata.dto.response.PageResponseDto;
 import io.mosip.kernel.masterdata.entity.Location;
 import io.mosip.kernel.masterdata.exception.DataNotFoundException;
 import io.mosip.kernel.masterdata.exception.MasterDataServiceException;
@@ -68,7 +60,6 @@ import io.mosip.kernel.masterdata.utils.MasterdataCreationUtil;
 import io.mosip.kernel.masterdata.utils.MasterdataSearchHelper;
 import io.mosip.kernel.masterdata.utils.MetaDataUtils;
 import io.mosip.kernel.masterdata.utils.PageUtils;
-import io.mosip.kernel.masterdata.validator.FilterColumnEnum;
 import io.mosip.kernel.masterdata.validator.FilterColumnValidator;
 import io.mosip.kernel.masterdata.validator.FilterTypeValidator;
 
@@ -109,9 +100,9 @@ public class LocationServiceImpl implements LocationService {
 
 	@Autowired
 	private PageUtils pageUtils;
-	private List<Location> childHierarchyList = null;
-	private List<Location> parentHierarchyList = null;
-	private List<String> childList = null;
+	//private List<Location> childHierarchyList = null;
+	//private List<Location> parentHierarchyList = null;
+	//private List<String> childList = null;
 
 	@Autowired
 	private MasterdataCreationUtil masterdataCreationUtil;
@@ -182,8 +173,8 @@ public class LocationServiceImpl implements LocationService {
 	public LocationResponseDto getLocationHierarchyByLangCode(String locCode, String langCode) {
 		List<Location> childList = null;
 		List<Location> parentList = null;
-		childHierarchyList = new ArrayList<>();
-		parentHierarchyList = new ArrayList<>();
+		List<Location> childHierarchyList = new ArrayList<>();
+		List<Location> parentHierarchyList = new ArrayList<>();
 		LocationResponseDto locationHierarchyResponseDto = new LocationResponseDto();
 		try {
 
@@ -191,8 +182,8 @@ public class LocationServiceImpl implements LocationService {
 			if (locHierList != null && !locHierList.isEmpty()) {
 				for (Location locationHierarchy : locHierList) {
 					String currentParentLocCode = locationHierarchy.getParentLocCode();
-					childList = getChildList(locCode, langCode);
-					parentList = getParentList(currentParentLocCode, langCode);
+					childList = getChildList(locCode, langCode,childHierarchyList);
+					parentList = getParentList(currentParentLocCode, langCode,parentHierarchyList);
 
 				}
 				locHierList.addAll(childList);
@@ -544,14 +535,22 @@ public class LocationServiceImpl implements LocationService {
 	 * @param langCode - language code
 	 * @return List<Location>
 	 */
-	private List<Location> getChildList(String locCode, String langCode) {
+	private List<Location> getChildList(String locCode, String langCode,List<Location> childHierarchyList) {
 
 		if (locCode != null && !locCode.isEmpty()) {
 			List<Location> childLocHierList = getLocationChildHierarchyList(locCode, langCode);
 			childHierarchyList.addAll(childLocHierList);
-			childLocHierList.parallelStream().filter(entity -> entity.getCode() != null && !entity.getCode().isEmpty())
-					.map(entity -> getChildList(entity.getCode(), langCode)).collect(Collectors.toList());
+			for (int i = 0; i < childLocHierList.size(); i++) {
+				if (null != childLocHierList.get(i).getCode() && !childLocHierList.get(i).getCode().isEmpty()) {
+					getChildList(childLocHierList.get(i).getCode(), langCode, childHierarchyList);
+				}
+			}
+			
+		//childLocHierList.parallelStream().filter(entity -> entity.getCode() != null && !entity.getCode().isEmpty())
+		//			.map(entity -> getChildList(entity.getCode(), langCode,childHierarchyList)).collect(Collectors.toList());
+
 		}
+		
 
 		return childHierarchyList;
 	}
@@ -564,15 +563,21 @@ public class LocationServiceImpl implements LocationService {
 	 * @param langCode - language code
 	 * @return List<LocationHierarcy>
 	 */
-	private List<Location> getParentList(String locCode, String langCode) {
+	private List<Location> getParentList(String locCode, String langCode,List<Location> parentHierarchyList) {
 
 		if (locCode != null && !locCode.isEmpty()) {
 			List<Location> parentLocHierList = getLocationHierarchyList(locCode, langCode);
 			parentHierarchyList.addAll(parentLocHierList);
-
-			parentLocHierList.parallelStream()
+			for (int i = 0; i < parentLocHierList.size(); i++) {
+				if (parentLocHierList.get(i).getParentLocCode() != null
+						&& !parentLocHierList.get(i).getParentLocCode().isEmpty()) {
+					getParentList(parentLocHierList.get(i).getParentLocCode(), langCode, parentHierarchyList);
+				}
+			}
+		/*	parentLocHierList.parallelStream()
 					.filter(entity -> entity.getParentLocCode() != null && !entity.getParentLocCode().isEmpty())
-					.map(entity -> getParentList(entity.getParentLocCode(), langCode)).collect(Collectors.toList());
+					.map(entity -> getParentList(entity.getParentLocCode(), langCode,parentHierarchyList)).collect(Collectors.toList());
+		*/
 		}
 
 		return parentHierarchyList;
@@ -661,19 +666,24 @@ public class LocationServiceImpl implements LocationService {
 	 * @return List<Location>
 	 */
 	@Override
-	public List<String> getChildList(String locCode) {
-		childList = new ArrayList<>();
-		List<String> resultList = getChildByLocCode(locCode);
+	public List<String> getChildList(String locCode,List<String> childList) {
+		
+		List<String> resultList = getChildByLocCode(locCode, childList);
 		if (!resultList.isEmpty())
 			return resultList;
 		return Arrays.asList(locCode);
 	}
 
-	private List<String> getChildByLocCode(String locCode) {
+	private List<String> getChildByLocCode(String locCode,List<String> childList) {
 		if (locCode != null && !locCode.isEmpty()) {
 			List<String> childLocHierList = getLocationChildHierarchyList(locCode);
 			childList.addAll(childLocHierList);
-			childLocHierList.parallelStream().filter(Objects::nonNull).map(this::getChildByLocCode).collect(Collectors.toList());
+			for (int i = 0; i < childLocHierList.size(); i++) {
+				if (null != childLocHierList.get(i)) {
+					getChildByLocCode(locCode, childList);
+				}
+			}
+			//childLocHierList.parallelStream().filter(Objects::nonNull).map(entity->getChildByLocCode(locCode,childList)).collect(Collectors.toList());
 		}
 		return childList;
 	}
@@ -696,7 +706,7 @@ public class LocationServiceImpl implements LocationService {
 	 * 
 	 * @see io.mosip.kernel.masterdata.service.LocationService#locationFilterValues(
 	 * io. mosip.kernel.masterdata.dto.request.FilterValueDto)
-	 */
+	 *//*
 	@Override
 	public FilterResponseCodeDto locationFilterValues(FilterValueDto filterValueDto) {
 		FilterResponseCodeDto filterResponseDto = new FilterResponseCodeDto();
@@ -745,9 +755,9 @@ public class LocationServiceImpl implements LocationService {
 				}
 				if (filter.getType().equals(FilterColumnEnum.UNIQUE.toString())) {
 					if (filter.getColumnName().equals(MasterDataConstant.IS_ACTIVE)) {
-						List<FilterData> filterValues = masterDataFilterHelper.filterValuesWithCode(Location.class,
+						FilterResult<FilterData> filterResult = masterDataFilterHelper.filterValuesWithCode(Location.class,
 								filter, filterValueDto, "code");
-						filterValues.forEach(filterValue -> {
+						filterResult.getFilterData().forEach(filterValue -> {
 							ColumnCodeValue columnValue = new ColumnCodeValue();
 							columnValue.setFieldCode(filterValue.getFieldCode());
 							columnValue.setFieldID(filter.getColumnName());
@@ -820,7 +830,7 @@ public class LocationServiceImpl implements LocationService {
 		}
 
 		return filterResponseDto;
-	}
+	}*/
 
 	/**
 	 * Method to find out the hierrachy level from the column name
@@ -924,24 +934,48 @@ public class LocationServiceImpl implements LocationService {
 		}
 		return pageDto;
 	}
+
 	@Override
 	public FilterResponseCodeDto locFilterValues(FilterValueDto filterValueDto) {
 		FilterResponseCodeDto filterResponseDto = new FilterResponseCodeDto();
 		List<ColumnCodeValue> columnValueList = new ArrayList<>();
 		if (filterColumnValidator.validate(FilterDto.class, filterValueDto.getFilters(), Location.class)) {
 			for (FilterDto filterDto : filterValueDto.getFilters()) {
-				List<FilterData> filterValues = masterDataFilterHelper.filterValuesWithCode(Location.class,
+				FilterResult<FilterData> filterResult = masterDataFilterHelper.filterValuesWithCode(Location.class,
 						filterDto, filterValueDto, "code");
-				filterValues.forEach(filterValue -> {
+				filterResult.getFilterData().forEach(filterValue -> {
 					ColumnCodeValue columnCodeValue = new ColumnCodeValue();
 					columnCodeValue.setFieldID(filterDto.getColumnName());
 					columnCodeValue.setFieldValue(filterValue.getFieldValue());
 					columnCodeValue.setFieldCode(filterValue.getFieldCode());
 					columnValueList.add(columnCodeValue);
 				});
+				filterResponseDto.setTotalCount(filterResult.getTotalCount());
 			}
 			filterResponseDto.setFilters(columnValueList);
 		}
 		return filterResponseDto;
+	}
+
+
+	@Override
+	public LocationResponseDto getImmediateChildrenByLocCode(String locationCode, List<String> languageCodes) {
+		List<Location> locationlist = null;
+		LocationResponseDto locationHierarchyResponseDto = new LocationResponseDto();
+		try {
+			locationlist = locationRepository.findLocationHierarchyByParentLocCode(locationCode, languageCodes);
+
+		} catch (DataAccessException | DataAccessLayerException e) {
+			throw new MasterDataServiceException(LocationErrorCode.LOCATION_FETCH_EXCEPTION.getErrorCode(),
+					LocationErrorCode.LOCATION_FETCH_EXCEPTION.getErrorMessage() + ExceptionUtils.parseException(e));
+		}
+
+		if (locationlist.isEmpty()) {
+			throw new DataNotFoundException(LocationErrorCode.LOCATION_NOT_FOUND_EXCEPTION.getErrorCode(),
+					LocationErrorCode.LOCATION_NOT_FOUND_EXCEPTION.getErrorMessage());
+		}
+		List<LocationDto> locationDtoList = MapperUtils.mapAll(locationlist, LocationDto.class);
+		locationHierarchyResponseDto.setLocations(locationDtoList);
+		return locationHierarchyResponseDto;
 	}
 }

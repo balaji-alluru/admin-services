@@ -1,6 +1,6 @@
 package io.mosip.kernel.masterdata.controller;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -60,6 +60,7 @@ public class BiometricTypeController {
 	 * @return All Biometric type details
 	 */
 	//@PreAuthorize("hasAnyRole('ZONAL_ADMIN','GLOBAL_ADMIN','REGISTRATION_SUPERVISOR','REGISTRATION_PROCESSOR','REGISTRATION_OFFICER')")
+	@Deprecated
 	@ResponseFilter
 	@PreAuthorize("hasAnyRole(@authorizedRoles.getGetbiometrictypeslangcode())")
 	@GetMapping("/{langcode}")
@@ -70,7 +71,7 @@ public class BiometricTypeController {
 		responseWrapper.setResponse(biometricTypeService.getAllBiometricTypesByLanguageCode(langCode));
 		return responseWrapper;
 	}
-
+	
 	/**
 	 * API to fetch Biometric type details based on code and language code
 	 * 
@@ -81,9 +82,9 @@ public class BiometricTypeController {
 	//@PreAuthorize("hasAnyRole('ZONAL_ADMIN','GLOBAL_ADMIN','REGISTRATION_SUPERVISOR','REGISTRATION_PROCESSOR','REGISTRATION_OFFICER')")
 	@ResponseFilter
 	@PreAuthorize("hasAnyRole(@authorizedRoles.getGetbiometrictypescodelangcode())")
-	@GetMapping("/{code}/{langcode}")
+	@GetMapping({"/{code}/{langcode}","/code/{code}"})
 	public ResponseWrapper<BiometricTypeResponseDto> getBiometricTypeByCodeAndLangCode(
-			@PathVariable("code") String code, @PathVariable("langcode") String langCode) {
+			@PathVariable("code") String code, @PathVariable(value="langcode",required = false) String langCode) {
 
 		ResponseWrapper<BiometricTypeResponseDto> responseWrapper = new ResponseWrapper<>();
 		responseWrapper.setResponse(biometricTypeService.getBiometricTypeByCodeAndLangCode(code, langCode));

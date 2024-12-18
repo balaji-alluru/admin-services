@@ -49,7 +49,7 @@ public class BiometricAttributeControllerTest {
 	public void setUp() {
 		mapper = new ObjectMapper();
 		mapper.registerModule(new JavaTimeModule());
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 
 	}
 
@@ -62,7 +62,7 @@ public class BiometricAttributeControllerTest {
 						+ "    \"code\": \"RI\",\n" + "    \"description\": \"Print of right Iris\",\n"
 						+ "    \"isActive\": true,\n" + "    \"langCode\": \"eng\",\n"
 						+ "    \"name\": \"Right Iris\",\n" + "   \"biometricTypeCode\":\"IRS\"\n" + "  }\n" + "}"))
-				.andReturn(),"KER-APP-103");
+				.andReturn(),null);
 
 	}
 	

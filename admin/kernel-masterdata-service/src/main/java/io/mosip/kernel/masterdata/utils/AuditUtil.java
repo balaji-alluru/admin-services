@@ -5,10 +5,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,8 +62,6 @@ public class AuditUtil {
 
 	private String hostName = null;
 
-	private volatile AtomicInteger eventCounter;
-
 	@Value("${mosip.kernel.masterdata.audit-url}")
 	private String auditUrl;
 
@@ -79,27 +76,6 @@ public class AuditUtil {
 	private Environment env;
 	
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(AuditUtil.class);
-	/**
-	 * Audit request.
-	 *
-	 * @param auditRequestDto the audit request dto
-	 */
-	@PostConstruct
-	private void init() {
-		if (System.getProperty("seqGen") == null) {
-			eventCounter = new AtomicInteger(500);
-		} else {
-			Integer eventCount = Integer.getInteger(System.getProperty("seqGen"));
-			eventCounter = new AtomicInteger(eventCount);
-		}
-
-	}
-
-	public void auditRequest(String eventName, String eventType, String description) {
-
-		String eventId = "ADM-" + eventCounter.incrementAndGet();
-		setAuditRequestDto(eventName, eventType, description, eventId);
-	}
 
 	public void auditRequest(String eventName, String eventType, String description, String eventId) {
 
@@ -109,14 +85,13 @@ public class AuditUtil {
 	/**
 	 * Sets the audit request dto.
 	 *
-	 * @param auditRequestDto the new audit request dto
+	 * @param eventName
+	 * @param eventType
+	 * @param description
+	 * @param eventId
 	 */
 	private void setAuditRequestDto(String eventName, String eventType, String description, String eventId) {
 		AuditRequestDto auditRequestDto = new AuditRequestDto();
-		if (!validateSecurityContextHolder()) {
-
-		}
-
 		auditRequestDto.setEventId(eventId);
 		auditRequestDto.setId("NO_ID");
 		auditRequestDto.setIdType("NO_ID_TYPE");
@@ -136,8 +111,9 @@ public class AuditUtil {
 		
 		//if current profile is local or dev donot call this method
 		if(Arrays.stream(env.getActiveProfiles()).anyMatch(
-				   environment -> (environment.equalsIgnoreCase("local")) )) {
-			LOGGER.info("Recieved Audit : "+auditRequestDto.toString());
+				   environment -> (environment.equalsIgnoreCase("local")) ||
+						   environment.equalsIgnoreCase("test")) ) {
+			LOGGER.info("Recieved Audit : {}",auditRequestDto.toString());
 			
 		} else {
 			callAuditManager(auditRequestDto);
@@ -200,7 +176,6 @@ public class AuditUtil {
 	 * For Auditing Login Services
 	 * 
 	 * @param auditRequestDto
-	 * @param token
 	 * @return
 	 */
 	public void callAuditManager(AuditRequestDto auditRequestDto) {

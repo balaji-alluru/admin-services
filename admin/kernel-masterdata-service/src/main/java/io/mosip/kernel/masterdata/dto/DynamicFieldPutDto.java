@@ -2,13 +2,15 @@ package io.mosip.kernel.masterdata.dto;
 
 import java.util.List;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
+
+import io.mosip.kernel.masterdata.validator.AlphabeticValidator;
 import io.mosip.kernel.masterdata.validator.ValidLangCode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -26,8 +28,8 @@ public class DynamicFieldPutDto {
 
 	@ApiModelProperty(notes = "Field name", example = "any name", required = true)
 	@NotBlank
-	@Pattern(regexp = "^[a-zA-Z]+$")
 	@Size(min = 2, max = 20)
+	@AlphabeticValidator(message = "name cannot contain numbers and special characters")
 	private String name;
 
 	@ApiModelProperty(notes = "Language Code", example = "eng", required = true)

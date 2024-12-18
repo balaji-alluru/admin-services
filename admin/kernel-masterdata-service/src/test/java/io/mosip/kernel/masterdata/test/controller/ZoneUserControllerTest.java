@@ -69,7 +69,7 @@ public class ZoneUserControllerTest {
 	public void setUp() {
 		mapper = new ObjectMapper();
 		mapper.registerModule(new JavaTimeModule());
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 		ZoneUserDto dto=new ZoneUserDto();
 		dto.setIsActive(true);
 		dto.setLangCode("eng");
@@ -148,7 +148,7 @@ public class ZoneUserControllerTest {
 	
 	@Test
 	@WithUserDetails("global-admin")
-	public void t002mapUserZoneTest() throws Exception {
+	public void t002mapUserZoneTest01() throws Exception {
 		zoneUserDto.getRequest().setUserId("5");
 		MasterDataTest.checkResponse(
 				mockMvc.perform(MockMvcRequestBuilders.post("/zoneuser").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(zoneUserDto))).andReturn(),
@@ -157,17 +157,17 @@ public class ZoneUserControllerTest {
 
 	@Test
 	@WithUserDetails("global-admin")
-	public void t002mapUserZoneFailTest() throws Exception {
+	public void t002mapUserZoneTest02() throws Exception {
 		zoneUserDto.getRequest().setUserId("100");
 		MasterDataTest.checkResponse(
 				mockMvc.perform(MockMvcRequestBuilders.post("/zoneuser").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(zoneUserDto))).andReturn(),
-				"KER-USR-014");
+				null);
 	}
 	
 	@Test
 	@WithUserDetails("global-admin")
 	public void t003updateapUserZoneTest2() throws Exception {
-		zoneUserPutDto.getRequest().setUserId("user7");
+		zoneUserPutDto.getRequest().setUserId("global-admin");
 		//zoneUserPutDto.getRequest().setIsActive(true);
 		MasterDataTest.checkResponse(
 				mockMvc.perform(MockMvcRequestBuilders.put("/zoneuser").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(zoneUserPutDto))).andReturn(),
@@ -216,7 +216,7 @@ public class ZoneUserControllerTest {
 		
 		MasterDataTest.checkResponse(
 				mockMvc.perform(MockMvcRequestBuilders.delete("/zoneuser/3/CST")).andReturn(),
-				"KER-USR-011");
+				"KER-USR-022");
 	}
 	
 	@Test

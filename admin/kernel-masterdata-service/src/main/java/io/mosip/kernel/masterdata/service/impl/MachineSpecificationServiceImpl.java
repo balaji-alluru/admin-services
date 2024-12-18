@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import io.mosip.kernel.masterdata.dto.response.FilterResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
@@ -148,7 +149,7 @@ public class MachineSpecificationServiceImpl implements MachineSpecificationServ
 		MapperUtils.map(renMachineSpecification, idAndLanguageCodeID);
 		auditUtil.auditRequest(String.format(MasterDataConstant.SUCCESSFUL_CREATE, MachineSpecification.class.getSimpleName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_CREATE_DESC,
-						MachineSpecification.class.getSimpleName(), idAndLanguageCodeID.getId()));
+						MachineSpecification.class.getSimpleName(), idAndLanguageCodeID.getId()),"ADM-945");
 		return idAndLanguageCodeID;
 
 	}
@@ -227,7 +228,7 @@ public class MachineSpecificationServiceImpl implements MachineSpecificationServ
 		MapperUtils.map(updMachineSpecification, idAndLanguageCodeID);
 		auditUtil.auditRequest(String.format(MasterDataConstant.SUCCESSFUL_UPDATE, MachineSpecification.class.getSimpleName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_UPDATE_DESC,
-						MachineSpecification.class.getSimpleName(), idAndLanguageCodeID.getId()));
+						MachineSpecification.class.getSimpleName(), idAndLanguageCodeID.getId()),"ADM-946");
 		return idAndLanguageCodeID;
 	}
 
@@ -280,7 +281,7 @@ public class MachineSpecificationServiceImpl implements MachineSpecificationServ
 		auditUtil.auditRequest(
 				String.format(MasterDataConstant.SUCCESSFUL_UPDATE, MachineSpecification.class.getSimpleName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_UPDATE_DESC,
-						MachineSpecification.class.getSimpleName(), id));
+						MachineSpecification.class.getSimpleName(), id),"ADM-947");
 		return statusResponseDto;
 	}
 
@@ -485,18 +486,20 @@ public class MachineSpecificationServiceImpl implements MachineSpecificationServ
 	public FilterResponseCodeDto machineSpecificationFilterValues(FilterValueDto filterValueDto) {
 		FilterResponseCodeDto filterResponseDto = new FilterResponseCodeDto();
 		List<ColumnCodeValue> columnValueList = new ArrayList<>();
+		filterValueDto.setLanguageCode(null);
 		if (filterColumnValidator.validate(FilterDto.class, filterValueDto.getFilters(), MachineSpecification.class)) {
 			for (FilterDto filterDto : filterValueDto.getFilters()) {
-				List<FilterData> filterValues = masterDataFilterHelper.filterValuesWithCodeWithoutLangCode(
+				FilterResult<FilterData> filterResult = masterDataFilterHelper.filterValuesWithCode(
 						MachineSpecification.class, filterDto,
 						filterValueDto,"id");
-				filterValues.forEach(filterValue -> {
+				filterResult.getFilterData().forEach(filterValue -> {
 					ColumnCodeValue columnValue = new ColumnCodeValue();
 					columnValue.setFieldCode(filterValue.getFieldCode());
 					columnValue.setFieldID(filterDto.getColumnName());
 					columnValue.setFieldValue(filterValue.getFieldValue());
 					columnValueList.add(columnValue);
 				});
+				filterResponseDto.setTotalCount(filterResult.getTotalCount());
 			}
 			filterResponseDto.setFilters(columnValueList);
 		}

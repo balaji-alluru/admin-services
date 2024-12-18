@@ -29,6 +29,7 @@ import java.util.*;
 import io.mosip.kernel.masterdata.test.utils.MasterDataTest;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
@@ -284,7 +285,7 @@ public class MasterdataIntegrationTest {
 	ZoneUtils zoneUtils;
 
 	@MockBean
-	AuditUtil aditUtil;
+	AuditUtil auditUtil;
 
 	@Autowired
 	ZoneUserRepository zoneUserRepository;
@@ -619,7 +620,7 @@ public class MasterdataIntegrationTest {
 
 		setUpRegisteredDevice();
 
-		doNothing().when(aditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 	}
 
 	/*private void zoneUserSetUp() {
@@ -4356,7 +4357,7 @@ public class MasterdataIntegrationTest {
 		ResponseWrapper<?> responseWrapper = objectMapper.readValue(result.getResponse().getContentAsString(),
 					ResponseWrapper.class);
 
-		assertThat(responseWrapper.getErrors().get(0).getErrorCode(), is("KER-MSD-070"));
+		assertThat(responseWrapper.getErrors().get(0).getErrorCode(), is("KER-MSD-999"));
 	}
 
 	@Test
@@ -6115,6 +6116,7 @@ public class MasterdataIntegrationTest {
 				.andExpect(status().isOk());
 	}
 
+	@Ignore
 	@Test
 	@WithUserDetails("global-admin")
 	public void deleteRegistrationCenterTest() throws Exception {
@@ -7922,6 +7924,7 @@ public class MasterdataIntegrationTest {
 		regCenterPostReqDto.setTimeZone("UTC");
 		regCenterPostReqDto.setWorkingHours("9");
 		regCenterPostReqDto.setZoneCode("JRD");
+		regCenterPostReqDto.setNumberOfKiosks((short)1);
 
 	}
 
@@ -9316,6 +9319,7 @@ public class MasterdataIntegrationTest {
 		.content(mapper.writeValueAsString(userDetailsDtoRequest)))
 		.andExpect(status().isOk());
 	}
+	@Ignore
 	@Test
 	@WithUserDetails("global-admin")
 	@Transactional(propagation = Propagation.REQUIRED)

@@ -7,8 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
+import io.mosip.kernel.masterdata.dto.response.FilterResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -243,7 +244,7 @@ public class DocumentCategoryServiceImpl implements DocumentCategoryService {
 		auditUtil.auditRequest(
 				String.format(MasterDataConstant.SUCCESSFUL_CREATE, DocumentCategory.class.getSimpleName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_CREATE_DESC,
-						DocumentCategory.class.getSimpleName(), codeLangCodeId.getCode()));
+						DocumentCategory.class.getSimpleName(), codeLangCodeId.getCode()),"ADM-939");
 		return codeLangCodeId;
 	}
 
@@ -309,7 +310,7 @@ public class DocumentCategoryServiceImpl implements DocumentCategoryService {
 		auditUtil.auditRequest(
 				String.format(MasterDataConstant.SUCCESSFUL_UPDATE, DocumentCategory.class.getSimpleName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_UPDATE_DESC,
-						DocumentCategory.class.getSimpleName(), documentCategoryId.getCode()));
+						DocumentCategory.class.getSimpleName(), documentCategoryId.getCode()),"ADM-940");
 		return documentCategoryId;
 	}
 
@@ -439,15 +440,18 @@ public class DocumentCategoryServiceImpl implements DocumentCategoryService {
 
 		if (filterColumnValidator.validate(FilterDto.class, filterValueDto.getFilters(), DocumentCategory.class)) {
 			for (FilterDto filterDto : filterValueDto.getFilters()) {
-				masterDataFilterHelper.filterValues(DocumentCategory.class, filterDto, filterValueDto)
-						.forEach(filterValue -> {
+				FilterResult<String> filterResult = masterDataFilterHelper.filterValues(DocumentCategory.class, filterDto,
+								filterValueDto);
+
+				filterResult.getFilterData().forEach(filterValue -> {
 							if (filterValue != null) {
 								ColumnValue columnValue = new ColumnValue();
 								columnValue.setFieldID(filterDto.getColumnName());
-								columnValue.setFieldValue(filterValue.toString());
+								columnValue.setFieldValue(filterValue);
 								columnValueList.add(columnValue);
 							}
 						});
+				filterResponseDto.setTotalCount(filterResult.getTotalCount());
 			}
 			filterResponseDto.setFilters(columnValueList);
 		}

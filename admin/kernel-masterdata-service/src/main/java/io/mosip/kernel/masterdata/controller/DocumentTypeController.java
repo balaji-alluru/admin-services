@@ -2,7 +2,7 @@ package io.mosip.kernel.masterdata.controller;
 
 import java.util.List;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -241,7 +241,7 @@ public class DocumentTypeController {
 		auditUtil.auditRequest(
 				String.format(MasterDataConstant.SUCCESSFUL_SEARCH, DocumentTypeDto.class.getCanonicalName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_SEARCH_DESC,
-						DocumentTypeDto.class.getCanonicalName(), "ADM-686"));
+						DocumentTypeDto.class.getCanonicalName()), "ADM-686");
 		return responseWrapper;
 	}
 

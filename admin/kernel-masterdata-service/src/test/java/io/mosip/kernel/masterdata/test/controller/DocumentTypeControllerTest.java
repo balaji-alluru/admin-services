@@ -64,7 +64,7 @@ public class DocumentTypeControllerTest {
 	private RequestWrapper<SearchDto> searchDtoRq=new RequestWrapper<SearchDto>();
 	@Before
 	public void setUp(){
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 		mapper = new ObjectMapper();
 		mapper.registerModule(new JavaTimeModule());
 		documentTypeDtoReq=new RequestWrapper<DocumentTypeDto>();
@@ -147,10 +147,10 @@ public class DocumentTypeControllerTest {
 	
 	@Test
 	@WithUserDetails("global-admin")
-	public void t004createDocumentCategoryFailTest() throws Exception {
+	public void t004createDocumentCategoryTest() throws Exception {
 
 		MasterDataTest.checkResponse(mockMvc.perform(MockMvcRequestBuilders.post("/documenttypes").contentType(MediaType.APPLICATION_JSON)
-				.content(mapper.writeValueAsString(documentTypeDtoReq))).andReturn(),"KER-MSD-101");
+				.content(mapper.writeValueAsString(documentTypeDtoReq))).andReturn(),null);
 	}
 	
 	/*@Test
@@ -166,6 +166,14 @@ public class DocumentTypeControllerTest {
 	@WithUserDetails("global-admin")
 	public void t006updateDocumentTypeFailTest() throws Exception {
 		documentTypeupdateDtoReq.getRequest().setCode("POP");
+		MasterDataTest.checkResponse(mockMvc.perform(MockMvcRequestBuilders.put("/documenttypes").contentType(MediaType.APPLICATION_JSON)
+				.content(mapper.writeValueAsString(mapper.writeValueAsString(documentTypeupdateDtoReq)))).andReturn(), "KER-MSD-999");
+	}
+	
+	@Test
+	@WithUserDetails("global-admin")
+	public void t006updateDocumentTypeFailTest1() throws Exception {
+		documentTypeupdateDtoReq.getRequest().setCode("@#gsf");
 		MasterDataTest.checkResponse(mockMvc.perform(MockMvcRequestBuilders.put("/documenttypes").contentType(MediaType.APPLICATION_JSON)
 				.content(mapper.writeValueAsString(mapper.writeValueAsString(documentTypeupdateDtoReq)))).andReturn(), "KER-MSD-999");
 	}
@@ -286,6 +294,8 @@ public class DocumentTypeControllerTest {
 
 	}
 	
+
+	
 	@Test
 	@WithUserDetails("global-admin")
 	public void t016updateDocumentTypeStatusTest1() throws Exception {
@@ -311,6 +321,14 @@ public class DocumentTypeControllerTest {
 		MasterDataTest.checkResponse(mockMvc.perform(MockMvcRequestBuilders.get("/documenttypes/missingids/fra"))
 		.andReturn(),null);
 	
+	}
+	@Test
+	@WithUserDetails("global-admin")
+	public void t001createDocumentCategoryTest1() throws Exception {
+		documentTypeDtoReq.getRequest().setCode("abc%");
+		MasterDataTest.checkResponse(mockMvc.perform(MockMvcRequestBuilders.post("/documenttypes").contentType(MediaType.APPLICATION_JSON)
+				.content(mapper.writeValueAsString(documentTypeDtoReq))).andReturn(),"KER-MSD-999");
+
 	}
 
 }

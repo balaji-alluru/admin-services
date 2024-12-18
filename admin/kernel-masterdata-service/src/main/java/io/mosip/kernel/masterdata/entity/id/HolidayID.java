@@ -3,8 +3,8 @@ package io.mosip.kernel.masterdata.entity.id;
 import java.io.Serializable;
 import java.time.LocalDate;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,8 +32,5 @@ public class HolidayID implements Serializable {
 
 	@Column(name = "lang_code", nullable = false, length = 3)
 	private String langCode;
-
-	@Column(name = "holiday_name", nullable = false, length = 64)
-	private String holidayName;
 
 }

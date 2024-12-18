@@ -63,7 +63,7 @@ public class MachineSpecificationControllerTest {
 	public void setUp() {
 		mapper = new ObjectMapper();
 		mapper.registerModule(new JavaTimeModule());
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 		MachineSpecificationDto dto=new MachineSpecificationDto();
 		dto.setBrand("DELL");
 		dto.setDescription("Dell brand");
@@ -177,7 +177,7 @@ public class MachineSpecificationControllerTest {
 
 		MasterDataTest.checkResponse(
 				mockMvc.perform(MockMvcRequestBuilders.patch("/machinespecifications").param("id","100100").param("isActive", "false")).andReturn(),
-				"KER-MSD-117");
+				null);
 	}
 
 
@@ -192,20 +192,20 @@ public class MachineSpecificationControllerTest {
 	
 	@Test
 	@WithUserDetails("global-admin")
-	public void t006updateMachineSpecificationStatusFailTest1() throws Exception {
+	public void t006updateMachineSpecificationStatusTest1() throws Exception {
 		
 		MasterDataTest.checkResponse(
 				mockMvc.perform(MockMvcRequestBuilders.patch("/machinespecifications").param("id","300").param("isActive", "false")).andReturn(),
-				"KER-MSD-117");
+				null);
 	}
 	
 	@Test
 	@WithUserDetails("global-admin")
-	public void t006updateMachineSpecificationStatusFailTest2() throws Exception {
+	public void t006updateMachineSpecificationStatusTest2() throws Exception {
 		
 		MasterDataTest.checkResponse(
 				mockMvc.perform(MockMvcRequestBuilders.patch("/machinespecifications").param("id","11").param("isActive", "false")).andReturn(),
-				"KER-MSD-088");
+				null);
 	}
 	
 	@Test

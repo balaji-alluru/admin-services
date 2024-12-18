@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import io.mosip.kernel.masterdata.dto.response.*;
 import io.mosip.kernel.masterdata.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,10 +46,6 @@ import io.mosip.kernel.masterdata.dto.request.Pagination;
 import io.mosip.kernel.masterdata.dto.request.SearchDto;
 import io.mosip.kernel.masterdata.dto.request.SearchFilter;
 import io.mosip.kernel.masterdata.dto.request.SearchSort;
-import io.mosip.kernel.masterdata.dto.response.ColumnCodeValue;
-import io.mosip.kernel.masterdata.dto.response.FilterResponseCodeDto;
-import io.mosip.kernel.masterdata.dto.response.MachineSearchDto;
-import io.mosip.kernel.masterdata.dto.response.PageResponseDto;
 import io.mosip.kernel.masterdata.entity.Machine;
 import io.mosip.kernel.masterdata.entity.MachineHistory;
 import io.mosip.kernel.masterdata.entity.MachineSpecification;
@@ -135,6 +132,9 @@ public class MachineServiceImpl implements MachineService {
 
 	@Autowired
 	private RegistrationCenterRepository regCenterRepository;
+	
+	@Autowired
+	private RegistrationCenterServiceHelper regCenterServiceHelper;
 
 	/*
 	 * (non-Javadoc)
@@ -586,21 +586,22 @@ public class MachineServiceImpl implements MachineService {
 			return filterResponseDto;
 		}
 
+		filterValueDto.setLanguageCode(null);
 		if (filterColumnValidator.validate(FilterDto.class, filterValueDto.getFilters(), Machine.class)) {
 			for (FilterDto filterDto : filterValueDto.getFilters()) {
-				List<FilterData> filterValues = masterDataFilterHelper
-						.filterValuesWithCodeWithoutLangCode(Machine.class, filterDto,
+				FilterResult<FilterData> filterResult = masterDataFilterHelper
+						.filterValuesWithCode(Machine.class, filterDto,
 								filterValueDto,"id", zoneUtils.getZoneCodes(zones));
-				filterValues.forEach(filterValue -> {
+				filterResult.getFilterData().forEach(filterValue -> {
 					ColumnCodeValue columnValue = new ColumnCodeValue();
 					columnValue.setFieldCode(filterValue.getFieldCode());
 					columnValue.setFieldID(filterDto.getColumnName());
 					columnValue.setFieldValue(filterValue.getFieldValue());
 					columnValueList.add(columnValue);
 				});
+				filterResponseDto.setTotalCount(filterResult.getTotalCount());
 			}
 		}
-
 		filterResponseDto.setFilters(columnValueList);
 		return filterResponseDto;
 	}
@@ -632,7 +633,7 @@ public class MachineServiceImpl implements MachineService {
 
 		try {
 			for(Machine machine: machines) {
-				if(!(machine.getRegCenterId() ==null || machine.getRegCenterId().isEmpty())) {
+				if(machine.getRegCenterId() !=null && !machine.getRegCenterId().isBlank()) {
 					auditUtil.auditRequest(
 							String.format(MasterDataConstant.FAILURE_DECOMMISSION, MachineSearchDto.class.getSimpleName()),
 							MasterDataConstant.AUDIT_SYSTEM,
@@ -699,7 +700,7 @@ public class MachineServiceImpl implements MachineService {
 		try {
 			if(machinePostReqDto.getRegCenterId() != null && !machinePostReqDto.getRegCenterId().isEmpty()) {
 				validateRegistrationCenter(machinePostReqDto.getRegCenterId());
-				validateRegistrationCenterZone(machineZone,machinePostReqDto.getRegCenterId());
+				regCenterServiceHelper.validateRegistrationCenterZone(machineZone,machinePostReqDto.getRegCenterId());
 			}
 
 			//validate machine name
@@ -794,26 +795,7 @@ public class MachineServiceImpl implements MachineService {
 		
 	}
 	
-	private void validateRegistrationCenterZone(String zoneCode, String regCenterId) {
-		List<Zone> subZones = zoneUtils.getSubZones(languageUtils.getDefaultLanguage());
-		boolean isRegCenterMappedToUserZone = false;
-		boolean isInSameHierarchy = false;
-		Zone registrationCenterZone = null;		
-		List<RegistrationCenter> centers = regCenterRepository.findByRegId(regCenterId);
-		for (Zone zone : subZones) {
-
-			if (zone.getCode().equals(centers.get(0).getZoneCode())) {
-				isRegCenterMappedToUserZone = true;
-				registrationCenterZone = zone;
-
-			}
-		}
-		if(!isRegCenterMappedToUserZone) {
-			throw new RequestException(DeviceErrorCode.INVALID_CENTER_ZONE.getErrorCode(),
-					DeviceErrorCode.INVALID_CENTER_ZONE.getErrorMessage());
-		}
-		Objects.requireNonNull(registrationCenterZone, "registrationCenterZone is empty");
-	}
+	
 
 	/*
 	 * (non-Javadoc)
@@ -835,7 +817,7 @@ public class MachineServiceImpl implements MachineService {
 		try {
 			if(machinePutReqDto.getRegCenterId() != null && !machinePutReqDto.getRegCenterId().isEmpty()) {
 				validateRegistrationCenter(machinePutReqDto.getRegCenterId());
-				validateRegistrationCenterZone(machineZone,machinePutReqDto.getRegCenterId());
+				regCenterServiceHelper.validateRegistrationCenterZone(machineZone,machinePutReqDto.getRegCenterId());
 			}
 			// find requested machine is there or not in Machine Table
 			List<Machine> renMachine = machineRepository.findMachineById(machinePutReqDto.getId());

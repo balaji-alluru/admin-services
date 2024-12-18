@@ -11,7 +11,6 @@ import java.util.concurrent.CompletionException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.mosip.kernel.clientcrypto.dto.TpmCryptoRequestDto;
 import io.mosip.kernel.clientcrypto.dto.TpmCryptoResponseDto;
 import io.mosip.kernel.clientcrypto.service.spi.ClientCryptoManagerService;
@@ -61,7 +60,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 public class SyncMasterDataServiceImpl implements SyncMasterDataService {
 	
-	private Logger logger = LoggerFactory.getLogger(SyncMasterDataServiceImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(SyncMasterDataServiceImpl.class);
 
 	@Autowired
 	private SyncMasterDataServiceHelper serviceHelper;
@@ -111,8 +110,7 @@ public class SyncMasterDataServiceImpl implements SyncMasterDataService {
 
 	@Override
 	public SyncDataResponseDto syncClientSettings(String regCenterId, String keyIndex,
-			LocalDateTime lastUpdated, LocalDateTime currentTimestamp) 
-					throws Throwable {
+			LocalDateTime lastUpdated, LocalDateTime currentTimestamp) {
 		logger.info("syncClientSettings invoked for timespan from {} to {}", lastUpdated, currentTimestamp);
 		SyncDataResponseDto response = new SyncDataResponseDto();
 		RegistrationCenterMachineDto regCenterMachineDto = serviceHelper.getRegistrationCenterMachine(regCenterId, keyIndex);
@@ -120,9 +118,9 @@ public class SyncMasterDataServiceImpl implements SyncMasterDataService {
 		String registrationCenterId = regCenterMachineDto.getRegCenterId();
 
 		Map<Class, CompletableFuture> futureMap = clientSettingsHelper.getInitiateDataFetch(machineId, registrationCenterId,
-				lastUpdated, currentTimestamp, false, lastUpdated!=null);
+				lastUpdated, currentTimestamp, false, lastUpdated!=null, null);
 
-		CompletableFuture array [] = new CompletableFuture[futureMap.size()];
+		CompletableFuture[] array = new CompletableFuture[futureMap.size()];
 		CompletableFuture<Void> future = CompletableFuture.allOf(futureMap.values().toArray(array));
 
 		try {
@@ -136,7 +134,7 @@ public class SyncMasterDataServiceImpl implements SyncMasterDataService {
 			}
 		}
 
-		response.setDataToSync(clientSettingsHelper.retrieveData(futureMap, regCenterMachineDto.getPublicKey(), false));
+		response.setDataToSync(clientSettingsHelper.retrieveData(futureMap, regCenterMachineDto, false));
 		return response;
 	}
 	
@@ -223,8 +221,7 @@ public class SyncMasterDataServiceImpl implements SyncMasterDataService {
 
 	@Override
 	public SyncDataResponseDto syncClientSettingsV2(String regCenterId, String keyIndex, LocalDateTime lastUpdated,
-													LocalDateTime currentTimestamp, String clientVersion)
-			throws Throwable {
+													LocalDateTime currentTimestamp, String clientVersion, String fullSyncEntities) {
 		logger.info("syncClientSettingsV2 invoked for timespan from {} to {}", lastUpdated, currentTimestamp);
 		SyncDataResponseDto response = new SyncDataResponseDto();
 		RegistrationCenterMachineDto regCenterMachineDto = serviceHelper.getRegistrationCenterMachine(regCenterId, keyIndex);
@@ -232,9 +229,9 @@ public class SyncMasterDataServiceImpl implements SyncMasterDataService {
 		String registrationCenterId = regCenterMachineDto.getRegCenterId();
 
 		Map<Class, CompletableFuture> futureMap = clientSettingsHelper.getInitiateDataFetch(machineId, registrationCenterId,
-				lastUpdated, currentTimestamp, true, lastUpdated!=null);
+				lastUpdated, currentTimestamp, true, lastUpdated!=null, fullSyncEntities);
 
-		CompletableFuture array [] = new CompletableFuture[futureMap.size()];
+		CompletableFuture[] array = new CompletableFuture[futureMap.size()];
 		CompletableFuture<Void> future = CompletableFuture.allOf(futureMap.values().toArray(array));
 
 		try {
@@ -247,8 +244,8 @@ public class SyncMasterDataServiceImpl implements SyncMasterDataService {
 			}
 		}
 
-		List<SyncDataBaseDto> list = clientSettingsHelper.retrieveData(futureMap, regCenterMachineDto.getPublicKey(), true);
-		list.addAll(clientSettingsHelper.getConfiguredScriptUrlDetail(regCenterMachineDto.getPublicKey()));
+		List<SyncDataBaseDto> list = clientSettingsHelper.retrieveData(futureMap, regCenterMachineDto, true);
+		list.addAll(clientSettingsHelper.getConfiguredScriptUrlDetail(regCenterMachineDto));
 		response.setDataToSync(list);
 		return response;
 	}

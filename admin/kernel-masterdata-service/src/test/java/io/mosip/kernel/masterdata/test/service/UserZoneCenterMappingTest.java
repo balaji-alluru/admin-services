@@ -115,7 +115,7 @@ public class UserZoneCenterMappingTest {
         mockRestServiceServer.expect(requestTo(userDetailsUri + "/admin?search=110006"))
                 .andRespond(withSuccess().body(response).contentType(MediaType.APPLICATION_JSON));
 
-        Mockito.doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
     }
 
     @Test
@@ -179,13 +179,13 @@ public class UserZoneCenterMappingTest {
     @WithUserDetails("global-admin")
     public void test04UpdateUserZoneMappingTest() {
         ZoneUserPutDto zoneUserPutDto = new ZoneUserPutDto();
-        zoneUserPutDto.setUserId("110005");
-        zoneUserPutDto.setZoneCode("RSK");
+        zoneUserPutDto.setUserId("global-admin");
+        zoneUserPutDto.setZoneCode("NTH");
         zoneUserPutDto.setLangCode("eng");
         ZoneUserExtnDto result = zoneUserService.updateZoneUserMapping(zoneUserPutDto);
         Assert.assertEquals(zoneUserPutDto.getUserId(), result.getUserId());
         Assert.assertEquals(zoneUserPutDto.getZoneCode(), result.getZoneCode());
-        Assert.assertEquals(false, result.getIsActive());
+        Assert.assertEquals(true, result.getIsActive());
     }
 
     @Test
@@ -210,7 +210,7 @@ public class UserZoneCenterMappingTest {
         StatusResponseDto statusResponseDto = zoneUserService.updateZoneUserMapping("110005", true);
         Assert.assertTrue(statusResponseDto.getStatus().contains("Status updated successfully"));
 
-        ZoneUser zoneUser = zoneUserService.getZoneUser("110005", "RSK");
+        ZoneUser zoneUser = zoneUserService.getZoneUser("zonal-admin", "RSK");
         Assert.assertEquals(true, zoneUser.getIsActive());
     }
 
@@ -229,10 +229,10 @@ public class UserZoneCenterMappingTest {
     @Test
     @WithUserDetails("reg-admin")
     public void test08DeactivateUserZoneMappingTest() {
-        StatusResponseDto statusResponseDto = zoneUserService.updateZoneUserMapping("110005", false);
+        StatusResponseDto statusResponseDto = zoneUserService.updateZoneUserMapping("zonal-admin", false);
         Assert.assertTrue(statusResponseDto.getStatus().contains("Status updated successfully"));
 
-        ZoneUser zoneUser = zoneUserService.getZoneUser("110005", "RSK");
+        ZoneUser zoneUser = zoneUserService.getZoneUser("zonal-admin", "RSK");
         Assert.assertEquals(false, zoneUser.getIsActive());
         Assert.assertEquals(false, zoneUser.getIsDeleted());
     }
@@ -277,7 +277,7 @@ public class UserZoneCenterMappingTest {
     public void test11CreateUserCenterMappingTest() {
         UserDetailsDto userDetailsDto = new UserDetailsDto();
         userDetailsDto.setId("global-admin");
-        userDetailsDto.setRegCenterId("10001");
+        userDetailsDto.setRegCenterId("10002");
         userDetailsDto.setLangCode("eng");
         UserDetailsCenterMapping userDetailsCenterMapping = userDetailsService.createUser(userDetailsDto);
         Assert.assertEquals(userDetailsDto.getRegCenterId(), userDetailsCenterMapping.getRegCenterId());

@@ -13,10 +13,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.support.CronSequenceGenerator;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -30,8 +32,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
-
-import org.springframework.cache.CacheManager;
 
 @Component
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
@@ -69,8 +69,9 @@ public class SyncJobHelperService {
     @Scheduled(cron = "${syncdata.cache.evict.delta-sync.cron}", zone = "UTC")
 	public void evictDeltaCaches() {
 		logger.info("Eviction of all keys from delta-sync cache started");
-		if (null != cacheManager.getCache("delta-sync"))
-			cacheManager.getCache("delta-sync").clear();
+		Cache c=cacheManager.getCache("delta-sync");
+		if (null != c)
+			c.clear();
 		logger.info("Eviction of all keys from delta-sync cache completed");
 	}
 
@@ -79,15 +80,24 @@ public class SyncJobHelperService {
     }
 
     public LocalDateTime getDeltaSyncCurrentTimestamp() {
-        CronSequenceGenerator cronSequenceGenerator = new CronSequenceGenerator(deltaCacheEvictCron, TimeZone.getTimeZone(ZoneOffset.UTC));
-        Date nextTrigger1 = cronSequenceGenerator.next(new Date());
-        Date nextTrigger2 = cronSequenceGenerator.next(nextTrigger1);
+        CronExpression cronExpression = CronExpression.parse(deltaCacheEvictCron);
 
-        long minutes = ChronoUnit.MINUTES.between(nextTrigger1.toInstant().atZone(ZoneOffset.UTC).toLocalDateTime(),
-                nextTrigger2.toInstant().atZone(ZoneOffset.UTC).toLocalDateTime());
+        LocalDateTime immediateNextTrigger = cronExpression.next(LocalDateTime.now().atZone(ZoneOffset.UTC).toLocalDateTime());
+        if (immediateNextTrigger == null) {
+            logger.error("Cron expression might be invalid or has no upcoming triggers.");
+            return null;
+        }
 
-        LocalDateTime previousTrigger = nextTrigger1.toInstant().atZone(ZoneOffset.UTC).toLocalDateTime().minus(minutes,
-                ChronoUnit.MINUTES);
+        LocalDateTime nextTrigger = cronExpression.next(immediateNextTrigger);
+        if (nextTrigger == null) {
+            logger.error("No upcoming triggers after {}", immediateNextTrigger);
+            return null;
+        }
+
+        long minutes = ChronoUnit.MINUTES.between(immediateNextTrigger.toInstant(ZoneOffset.UTC).atZone(ZoneOffset.UTC).toLocalDateTime(),
+                nextTrigger.toInstant(ZoneOffset.UTC).atZone(ZoneOffset.UTC).toLocalDateTime());
+
+        LocalDateTime previousTrigger = immediateNextTrigger.toInstant(ZoneOffset.UTC).atZone(ZoneOffset.UTC).toLocalDateTime().minus(minutes, ChronoUnit.MINUTES);
 
         logger.debug("Identified previous trigger : {}", previousTrigger);
         return previousTrigger;
@@ -96,8 +106,9 @@ public class SyncJobHelperService {
     @Scheduled(cron = "${syncdata.cache.snapshot.cron}", zone = "UTC")
     public void clearCacheAndRecreateSnapshot() {
         logger.info("Eviction of all keys from initial-sync cache started");
-        if(null!=cacheManager.getCache("initial-sync"))
-        	cacheManager.getCache("initial-sync").clear();
+        Cache c=cacheManager.getCache("initial-sync");
+        if(null!=c)
+        	c.clear();
         logger.info("Eviction of all keys from initial-sync cache Completed");
 
         createEntitySnapshot();
@@ -164,19 +175,22 @@ public class SyncJobHelperService {
                 else
                     handleDynamicFields(entities); //Fills dynamic field data
 
-            } catch (Exception e) {
-            	
-                logger.error("Failed to create snapshot {} {}", entry.getKey().getSimpleName(), e);
-                
-            }
+			} catch (InterruptedException ie) {
+				logger.error("InterruptedException: ", ie);
+				Thread.currentThread().interrupt();
+			} catch (Exception e) {
+
+				logger.error("Failed to create snapshot {} {}", entry.getKey().getSimpleName(), e);
+
+			}
         }
     }
 
     private void handleDynamicFields(List entities) {
-        Map<String, List<DynamicFieldDto>> data = new HashMap<String, List<DynamicFieldDto>>();
+        Map<String, List<DynamicFieldDto>> data = new HashMap<>();
         entities.forEach(dto -> {
             if(!data.containsKey(((DynamicFieldDto)dto).getName())) {
-                List<DynamicFieldDto> langBasedData = new ArrayList<DynamicFieldDto>();
+                List<DynamicFieldDto> langBasedData = new ArrayList<>();
                 langBasedData.add(((DynamicFieldDto)dto));
                 data.put(((DynamicFieldDto)dto).getName(), langBasedData);
             }

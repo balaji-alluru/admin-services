@@ -2,7 +2,7 @@ package io.mosip.kernel.masterdata.controller;
 
 import java.util.List;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import io.mosip.kernel.masterdata.dto.response.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -227,6 +227,23 @@ public class LocationController {
 		ResponseWrapper<LocationResponseDto> responseWrapper = new ResponseWrapper<>();
 		responseWrapper
 				.setResponse(locationHierarchyService.getImmediateChildrenByLocCodeAndLangCode(locationCode, langCode));
+		return responseWrapper;
+	}
+
+	/**
+	 *
+	 * @param locationCode location code
+	 * @param languageCodes language codes
+	 * @return list of location hierarchies
+	 */
+	@ResponseFilter
+	@GetMapping(value = "/immediatechildren/{locationcode}")
+	public ResponseWrapper<LocationResponseDto> getImmediateChildrenByLocCode(
+			@PathVariable("locationcode") String locationCode, @RequestParam("languageCodes") List<String> languageCodes) {
+
+		ResponseWrapper<LocationResponseDto> responseWrapper = new ResponseWrapper<>();
+		responseWrapper
+				.setResponse(locationHierarchyService.getImmediateChildrenByLocCode(locationCode, languageCodes));
 		return responseWrapper;
 	}
 

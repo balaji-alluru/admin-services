@@ -108,7 +108,7 @@ public class ZoneUserServiceImpl implements ZoneUserService {
 						MasterDataConstant.AUDIT_SYSTEM,
 						String.format(MasterDataConstant.FAILURE_DESC,
 								ZoneUserErrorCode.DUPLICATE_REQUEST.getErrorCode(),
-								ZoneUserErrorCode.DUPLICATE_REQUEST.getErrorMessage()));
+								ZoneUserErrorCode.DUPLICATE_REQUEST.getErrorMessage()),"ADM-967");
 				throw new MasterDataServiceException(ZoneUserErrorCode.DUPLICATE_REQUEST.getErrorCode(),
 						ZoneUserErrorCode.DUPLICATE_REQUEST.getErrorMessage());
 			}
@@ -117,7 +117,7 @@ public class ZoneUserServiceImpl implements ZoneUserService {
 						MasterDataConstant.AUDIT_SYSTEM,
 						String.format(MasterDataConstant.FAILURE_DESC,
 								ZoneUserErrorCode.USER_MAPPING_PRSENT_IN_DB.getErrorCode(),
-								ZoneUserErrorCode.USER_MAPPING_PRSENT_IN_DB.getErrorMessage()));
+								ZoneUserErrorCode.USER_MAPPING_PRSENT_IN_DB.getErrorMessage()),"ADM-968");
 				throw new MasterDataServiceException(ZoneUserErrorCode.USER_MAPPING_PRSENT_IN_DB.getErrorCode(),
 						ZoneUserErrorCode.USER_MAPPING_PRSENT_IN_DB.getErrorMessage());
 
@@ -127,7 +127,6 @@ public class ZoneUserServiceImpl implements ZoneUserService {
 
 			// Throws exception if not found
 			zoneservice.getZone(zoneUserDto.getZoneCode(), languageUtils.getDefaultLanguage());
-
 			zu = zoneUserRepo.save(zu);
 			ZoneUserHistory zuh = new ZoneUserHistory();
 			MapperUtils.map(zu, zuh);
@@ -140,14 +139,14 @@ public class ZoneUserServiceImpl implements ZoneUserService {
 					MasterDataConstant.AUDIT_SYSTEM,
 					String.format(MasterDataConstant.FAILURE_DESC,
 							ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorCode(),
-							ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorMessage()));
+							ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorMessage()),"ADM-969");
 			throw new MasterDataServiceException(ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorCode(),
 					ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorMessage() + ExceptionUtils.parseException(e));
 		}
 
 		auditUtil.auditRequest(String.format(MasterDataConstant.SUCCESSFUL_CREATE, ZoneUser.class.getSimpleName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_CREATE_DESC,
-						ZoneUser.class.getSimpleName(), zu.getUserId()));
+						ZoneUser.class.getSimpleName(), zu.getUserId()),"ADM-970");
 		ZoneUserExtnDto zoneUserDto1 = new ZoneUserExtnDto();
 		return MapperUtils.map(zu, zoneUserDto1);
 	}
@@ -164,7 +163,7 @@ public class ZoneUserServiceImpl implements ZoneUserService {
 						MasterDataConstant.AUDIT_SYSTEM,
 						String.format(MasterDataConstant.FAILURE_DESC,
 								ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorCode(),
-								ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorMessage()));
+								ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorMessage()),"ADM-971");
 				throw new MasterDataServiceException(ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorCode(),
 						ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorMessage());
 			} else {
@@ -188,13 +187,13 @@ public class ZoneUserServiceImpl implements ZoneUserService {
 					MasterDataConstant.AUDIT_SYSTEM,
 					String.format(MasterDataConstant.FAILURE_DESC,
 							ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorCode(),
-							ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorMessage()));
+							ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorMessage()),"ADM-972");
 			throw new MasterDataServiceException(ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorCode(),
 					ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorMessage() + ExceptionUtils.parseException(e));
 		}
 		auditUtil.auditRequest(String.format(MasterDataConstant.SUCCESSFUL_UPDATE, ZoneUser.class.getSimpleName()),
 				MasterDataConstant.AUDIT_SYSTEM, String.format(MasterDataConstant.SUCCESSFUL_CREATE_DESC,
-						ZoneUser.class.getSimpleName(), zu.getUserId()));
+						ZoneUser.class.getSimpleName(), zu.getUserId()),"ADM-973");
 
 		return MapperUtils.map(zu, dto);
 	}
@@ -213,15 +212,15 @@ public class ZoneUserServiceImpl implements ZoneUserService {
 						MasterDataConstant.AUDIT_SYSTEM,
 						String.format(MasterDataConstant.FAILURE_DESC,
 								ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorCode(),
-								ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorMessage()));
+								ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorMessage()),"ADM-974");
 				throw new MasterDataServiceException(ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorCode(),
 						ZoneUserErrorCode.USER_MAPPING_NOT_PRSENT_IN_DB.getErrorMessage());
 			}
 
 			UserDetails ud=userDetailsRepo.findByIdAndIsDeletedFalseorIsDeletedIsNullAndIsActive(userId);
 			if(ud!=null) {
-				throw new MasterDataServiceException(ZoneUserErrorCode.USER_MAPPING_EXIST.getErrorCode(),
-						ZoneUserErrorCode.USER_MAPPING_EXIST.getErrorMessage());
+				throw new MasterDataServiceException(ZoneUserErrorCode.USER_MAPPING_EXIST_DELETE.getErrorCode(),
+						ZoneUserErrorCode.USER_MAPPING_EXIST_DELETE.getErrorMessage());
 			}
 			zoneUserRepo.deleteZoneUser(userId,LocalDateTime.now(),MetaDataUtils.getContextUser());
 			ZoneUserHistory udh = new ZoneUserHistory();
@@ -240,7 +239,7 @@ public class ZoneUserServiceImpl implements ZoneUserService {
 					MasterDataConstant.AUDIT_SYSTEM,
 					String.format(MasterDataConstant.FAILURE_DESC,
 							ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorCode(),
-							ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorMessage()));
+							ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorMessage()),"ADM-975");
 			throw new MasterDataServiceException(ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorCode(),
 					ZoneUserErrorCode.USER_MAPPING_EXCEPTION.getErrorMessage() + ExceptionUtils.parseException(e));
 		}
@@ -309,7 +308,7 @@ public class ZoneUserServiceImpl implements ZoneUserService {
 				throw new MasterDataServiceException(ZoneUserErrorCode.USER_MAPPING_EXIST.getErrorCode(),
 						ZoneUserErrorCode.USER_MAPPING_EXIST.getErrorMessage());
 			}
-			masterdataCreationUtil.updateMasterDataStatus(ZoneUser.class, userId, isActive, "userId");
+			masterdataCreationUtil.updateMasterDataStatus(ZoneUser.class, userId.toLowerCase(), isActive, "userId");
 
 			ZoneUserHistory zoneUserHistory = new ZoneUserHistory();
 			MetaDataUtils.setUpdateMetaData(zoneUser, zoneUserHistory, true);

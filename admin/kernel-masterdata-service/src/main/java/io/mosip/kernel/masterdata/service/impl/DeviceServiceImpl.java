@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import io.mosip.kernel.masterdata.dto.*;
+import io.mosip.kernel.masterdata.dto.response.*;
 import io.mosip.kernel.masterdata.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,13 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import io.mosip.kernel.core.dataaccess.exception.DataAccessLayerException;
 import io.mosip.kernel.masterdata.constant.DeviceErrorCode;
 import io.mosip.kernel.masterdata.constant.MasterDataConstant;
-import io.mosip.kernel.masterdata.dto.DeviceDto;
-import io.mosip.kernel.masterdata.dto.DeviceLangCodeDtypeDto;
-import io.mosip.kernel.masterdata.dto.DevicePutReqDto;
-import io.mosip.kernel.masterdata.dto.DeviceRegistrationCenterDto;
-import io.mosip.kernel.masterdata.dto.DeviceTypeDto;
-import io.mosip.kernel.masterdata.dto.PageDto;
-import io.mosip.kernel.masterdata.dto.SearchDtoWithoutLangCode;
 import io.mosip.kernel.masterdata.dto.getresponse.DeviceLangCodeResponseDto;
 import io.mosip.kernel.masterdata.dto.getresponse.DeviceResponseDto;
 import io.mosip.kernel.masterdata.dto.getresponse.StatusResponseDto;
@@ -43,10 +38,6 @@ import io.mosip.kernel.masterdata.dto.request.Pagination;
 import io.mosip.kernel.masterdata.dto.request.SearchDto;
 import io.mosip.kernel.masterdata.dto.request.SearchFilter;
 import io.mosip.kernel.masterdata.dto.request.SearchSort;
-import io.mosip.kernel.masterdata.dto.response.ColumnCodeValue;
-import io.mosip.kernel.masterdata.dto.response.DeviceSearchDto;
-import io.mosip.kernel.masterdata.dto.response.FilterResponseCodeDto;
-import io.mosip.kernel.masterdata.dto.response.PageResponseDto;
 import io.mosip.kernel.masterdata.entity.Device;
 import io.mosip.kernel.masterdata.entity.DeviceHistory;
 import io.mosip.kernel.masterdata.entity.DeviceSpecification;
@@ -117,14 +108,13 @@ public class DeviceServiceImpl implements DeviceService {
 	private PageUtils pageUtils;
 
 	@Autowired
-	private ZoneService zoneService;
-
-	@Autowired
 	private MasterdataCreationUtil masterdataCreationUtil;
 
 	@Autowired
 	private AuditUtil auditUtil;
 
+	@Autowired
+	private RegistrationCenterServiceHelper regCenterServiceHelper;
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -201,7 +191,7 @@ public class DeviceServiceImpl implements DeviceService {
 			validateZone(deviceDto.getZoneCode(),deviceDto.getLangCode());
 			if (deviceDto.getRegCenterId() != null && !deviceDto.getRegCenterId().isEmpty()) {
 				validateRegistrationCenter(deviceDto.getRegCenterId());
-				validateRegistrationCenterZone(deviceDto.getZoneCode(), deviceDto.getRegCenterId());
+				regCenterServiceHelper.validateRegistrationCenterZone(deviceDto.getZoneCode(), deviceDto.getRegCenterId());
 			}
 			if (deviceDto != null) {
 				entity = MetaDataUtils.setCreateMetaData(deviceDto, Device.class);
@@ -607,12 +597,14 @@ public class DeviceServiceImpl implements DeviceService {
 				fil.add(f);
 		});
 		filterValueDto.setFilters(fil);
+		filterValueDto.setLanguageCode(null);
 		if (filterColumnValidator.validate(FilterDto.class, filterValueDto.getFilters(), Device.class))
 		{
 			for (FilterDto filterDto : filterValueDto.getFilters()) {
-				masterDataFilterHelper
-						.filterValuesWithCodeWithoutLangCode(Device.class, filterDto, filterValueDto, "id", zoneUtils.getZoneCodes(zones))
-						.forEach(filterValue -> {
+				FilterResult<FilterData> filterResult = masterDataFilterHelper
+						.filterValuesWithCode(Device.class, filterDto, filterValueDto, "id",
+								zoneUtils.getZoneCodes(zones));
+						filterResult.getFilterData().forEach(filterValue -> {
 							if (filterValue != null) {
 								ColumnCodeValue columnValue = new ColumnCodeValue();
 								columnValue.setFieldCode(filterValue.getFieldCode());
@@ -621,9 +613,9 @@ public class DeviceServiceImpl implements DeviceService {
 								columnValueList.add(columnValue);
 							}
 						});
+						filterResponseDto.setTotalCount(filterResult.getTotalCount());
 			}
 			filterResponseDto.setFilters(columnValueList);
-
 		}
 		return filterResponseDto;
 	}
@@ -678,7 +670,7 @@ public class DeviceServiceImpl implements DeviceService {
 		try {
 			// check the device has mapped to any reg-Center
 			for (Device device : devices) {
-				if (device.getRegCenterId() != null) {
+				if (device.getRegCenterId() != null && !device.getRegCenterId().isBlank()) {
 					auditUtil.auditRequest(
 							String.format(MasterDataConstant.FAILURE_DECOMMISSION, DeviceDto.class.getSimpleName()),
 							MasterDataConstant.AUDIT_SYSTEM,
@@ -745,7 +737,7 @@ public class DeviceServiceImpl implements DeviceService {
 		try {
 			if (devicePutReqDto.getRegCenterId() != null && !devicePutReqDto.getRegCenterId().isEmpty()) {
 				validateRegistrationCenter(devicePutReqDto.getRegCenterId());
-				validateRegistrationCenterZone(devicePutReqDto.getZoneCode(), devicePutReqDto.getRegCenterId());
+				regCenterServiceHelper.validateRegistrationCenterZone(devicePutReqDto.getZoneCode(), devicePutReqDto.getRegCenterId());
 			}
 			// find requested device is there or not in Device Table
 			List<Device> renDevice = deviceRepository.findtoUpdateDeviceById(devicePutReqDto.getId());
@@ -824,33 +816,6 @@ public class DeviceServiceImpl implements DeviceService {
 					DeviceErrorCode.INVALID_CENTER.getErrorMessage());
 		}
 
-	}
-
-	private void validateRegistrationCenterZone(String zoneCode, String regCenterId) {
-		List<Zone> subZones = zoneUtils.getSubZones(languageUtils.getDefaultLanguage());
-		boolean isRegCenterMappedToUserZone = false;
-		boolean isInSameHierarchy = false;
-		Zone registrationCenterZone = null;
-		List<String> zoneIds = subZones.parallelStream().map(Zone::getCode).collect(Collectors.toList());
-		List<RegistrationCenter> centers = regCenterRepository.findByRegId(regCenterId);
-		for (Zone zone : subZones) {
-
-			if (zone.getCode().equals(centers.get(0).getZoneCode())) {
-				isRegCenterMappedToUserZone = true;
-				registrationCenterZone = zone;
-
-			}
-		}
-		if (!isRegCenterMappedToUserZone) {
-			throw new RequestException(DeviceErrorCode.INVALID_CENTER_ZONE.getErrorCode(),
-					DeviceErrorCode.INVALID_CENTER_ZONE.getErrorMessage());
-		}
-		Objects.requireNonNull(registrationCenterZone, "registrationCenterZone is empty");
-	/*	isInSameHierarchy = subZones.stream().anyMatch(zone -> zone.equals(zoneCode));
-		if (!isInSameHierarchy) {
-			throw new RequestException(DeviceErrorCode.INVALID_CENTER_ZONE.getErrorCode(),
-					DeviceErrorCode.INVALID_CENTER_ZONE.getErrorMessage());
-		}*/
 	}
 
 	@Override

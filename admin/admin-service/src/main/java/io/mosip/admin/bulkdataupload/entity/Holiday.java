@@ -3,16 +3,16 @@ package io.mosip.admin.bulkdataupload.entity;
 import java.io.Serializable;
 import java.time.LocalDate;
 
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 
 //github.com/mosip/mosip.git
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Table;
 
 import io.mosip.admin.bulkdataupload.entity.id.HolidayID;
 import lombok.AllArgsConstructor;
@@ -42,11 +42,12 @@ public class Holiday extends BaseEntity implements Serializable {
 	@AttributeOverrides({
 			@AttributeOverride(name = "holidayDate", column = @Column(name = "holiday_date", nullable = false)),
 			@AttributeOverride(name = "locationCode", column = @Column(name = "location_code", nullable = false, length = 36)),
-			@AttributeOverride(name = "langCode", column = @Column(name = "lang_code", nullable = false, length = 3)),
-			@AttributeOverride(name = "holidayName", column = @Column(name = "holiday_name", nullable = false, length = 64)) })
+			@AttributeOverride(name = "langCode", column = @Column(name = "lang_code", nullable = false, length = 3)) })
 	private LocalDate holidayDate;
 	private String locationCode;
 	private String langCode;
+	
+	@Column(name = "holiday_name", nullable = false, length = 64)
 	private String holidayName;
 
 	@Column(name = "id", unique = true, nullable = false)

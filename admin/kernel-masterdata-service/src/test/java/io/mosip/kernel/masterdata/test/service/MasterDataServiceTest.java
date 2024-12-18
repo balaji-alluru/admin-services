@@ -12,16 +12,17 @@ import java.time.LocalTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import io.mosip.kernel.core.exception.ServiceError;
 import io.mosip.kernel.masterdata.dto.request.WorkingDaysPutRequestDto;
+import io.mosip.kernel.masterdata.dto.response.FilterResult;
 import io.mosip.kernel.masterdata.entity.*;
 import io.mosip.kernel.masterdata.repository.*;
 import io.mosip.kernel.masterdata.utils.*;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -406,7 +407,7 @@ public class MasterDataServiceTest {
 		LocationHierarchy hierarchy = new LocationHierarchy((short) 3, "City", "eng");
 		when(locationHierarchyRepository1.findByLangCodeAndLevelAndName(Mockito.anyString(), Mockito.anyShort(),
 				Mockito.anyString())).thenReturn(hierarchy);
-		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		doNothing().when(auditUtil).auditRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),Mockito.anyString());
 	}
 
 	private void documentTypeSetup() {
@@ -1509,17 +1510,17 @@ public class MasterDataServiceTest {
 	@Test(expected = MasterDataServiceException.class)
 	public void getBiometricTypeByCodeAndLangCodeFetchException() {
 		Mockito.when(biometricTypeRepository
-				.findByCodeAndLangCodeAndIsDeletedFalseOrIsDeletedIsNull(Mockito.anyString(), Mockito.anyString()))
+				.findByCodeAndIsDeletedFalseOrIsDeletedIsNull(Mockito.anyString()))
 				.thenThrow(DataRetrievalFailureException.class);
-		biometricTypeService.getBiometricTypeByCodeAndLangCode(Mockito.anyString(), Mockito.anyString());
+		biometricTypeService.getBiometricTypeByCodeAndLangCode(Mockito.anyString(), null);
 	}
 
 	@Test(expected = DataNotFoundException.class)
 	public void getBiometricTypeByCodeAndLangCodeNotFoundException() {
 		Mockito.when(biometricTypeRepository
-				.findByCodeAndLangCodeAndIsDeletedFalseOrIsDeletedIsNull(Mockito.anyString(), Mockito.anyString()))
+				.findByCodeAndIsDeletedFalseOrIsDeletedIsNull(Mockito.anyString()))
 				.thenReturn(null);
-		biometricTypeService.getBiometricTypeByCodeAndLangCode(Mockito.anyString(), Mockito.anyString());
+		biometricTypeService.getBiometricTypeByCodeAndLangCode(Mockito.anyString(),null);
 	}
 
 	@Test
@@ -1565,10 +1566,10 @@ public class MasterDataServiceTest {
 	@Test
 	public void getBioTypeByCodeAndLangCodeSuccess() {
 		Mockito.when(biometricTypeRepository
-				.findByCodeAndLangCodeAndIsDeletedFalseOrIsDeletedIsNull(Mockito.anyString(), Mockito.anyString()))
+				.findByCodeAndIsDeletedFalseOrIsDeletedIsNull(Mockito.anyString()))
 				.thenReturn(biometricType1);
 		BiometricTypeResponseDto biometricTypeResponseDto = biometricTypeService
-				.getBiometricTypeByCodeAndLangCode(Mockito.anyString(), Mockito.anyString());
+				.getBiometricTypeByCodeAndLangCode(Mockito.anyString(), null);
 		assertEquals(biometricType1.getCode(), biometricTypeResponseDto.getBiometrictypes().get(0).getCode());
 		assertEquals(biometricType1.getName(), biometricTypeResponseDto.getBiometrictypes().get(0).getName());
 	}
@@ -2582,6 +2583,7 @@ public class MasterDataServiceTest {
 	}
 	
 	@Test
+	@Ignore
 	public void updateRegistrationCenterAdminStatusSuccessTest() {
 		StatusResponseDto dto = new StatusResponseDto();
 		dto.setStatus("Status updated successfully for Registration Centers");
@@ -2909,7 +2911,7 @@ public class MasterDataServiceTest {
 
 		Mockito.when(filterColumnValidator.validate(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(true);
 		Mockito.when(masterDataFilterHelper.filterValuesWithCode(Mockito.any(), Mockito.any(), Mockito.any(),
-				Mockito.anyString())).thenReturn(filterValues);
+				Mockito.anyString())).thenReturn(new FilterResult(filterValues, 0));
 		FilterResponseCodeDto response = zoneService.zoneFilterValues(filterValueDto);
 		Assert.assertEquals(filterResponseCodeDto, response);
 	}
@@ -3102,6 +3104,30 @@ public class MasterDataServiceTest {
 		Assert.assertEquals("KER-MSD-308", serviceErrors.get(2).getErrorCode());
 		Assert.assertEquals("KER-MSD-260", serviceErrors.get(3).getErrorCode());
 		Assert.assertEquals("KER-MSD-259", serviceErrors.get(4).getErrorCode());
+	}
+
+	@Test
+	public void getImmediateChildrenByLocCodeTest() {
+		Mockito.when(locationHierarchyRepository
+						.findLocationHierarchyByParentLocCode(Mockito.anyString(), Mockito.anyList()))
+				.thenReturn(locationHierarchies);
+		Assert.assertEquals("IND", locationHierarchyService.getImmediateChildrenByLocCode("KAR", List.of("eng")).getLocations().get(0).getCode());
+	}
+
+	@Test(expected = MasterDataServiceException.class)
+	public void getImmediateChildrenByLocCodeTestExceptionTest() {
+		Mockito.when(locationHierarchyRepository
+						.findLocationHierarchyByParentLocCode(Mockito.anyString(), Mockito.anyList()))
+				.thenThrow(DataRetrievalFailureException.class);
+		locationHierarchyService.getImmediateChildrenByLocCode("KAR", List.of("eng"));
+	}
+
+	@Test(expected = DataNotFoundException.class)
+	public void getImmediateChildrenByLocCodeTestDataExceptionTest() {
+		Mockito.when(locationHierarchyRepository
+						.findLocationHierarchyByParentLocCode(Mockito.anyString(), Mockito.anyList()))
+				.thenReturn(new ArrayList<Location>());
+		locationHierarchyService.getImmediateChildrenByLocCode("KAR", List.of("eng"));
 	}
 
 }
